@@ -1,6 +1,6 @@
 '''
-VMController is a general purpose virtual machine controller written in Python.
-vmcontroller.host is the VMController application that runs on the host side.
+VMController is a general purpose virtual machine controller written in Python.\n
+vmcontroller.host is the module that runs on the host operating system.
 '''
 
 try:
@@ -10,12 +10,13 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-version = '0.1.1'
+name = 'vmcontroller.host'
+version = '0.0.1'
 
 setup(
-    name='vmcontroller.host',
+    name=name,
     version=version,
-    description='Virtual Machine Controller',
+    description='Virtual Machine Controller for host operating system',
     long_description=__doc__,
     keywords='hypervisor virtual-machine controller',
     license='BSD',
@@ -30,7 +31,7 @@ setup(
     install_requires=[
         'distribute',
         'setuptools',
-        #'twisted',
+        'twisted',
         'stomper==0.2.2',
         'netifaces',
         'coilmq',

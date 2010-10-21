@@ -1,6 +1,6 @@
 '''
-VMController is a general purpose virtual machine controller written in Python.
-vmcontroller.vm is the VMController application that runs on the vm side.
+VMController is a general purpose virtual machine controller written in Python.\n
+vmcontroller.vm is the module that runs on the guest operating system.
 '''
 
 try:
@@ -10,12 +10,13 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-version = '0.1.1'
+name = 'vmcontroller.vm'
+version = '0.0.1'
 
 setup(
-    name='vmcontroller.vm',
+    name=name,
     version=version,
-    description='Virtual Machine Controller',
+    description='Virtual Machine Controller for guest operating system',
     long_description=__doc__,
     keywords='hypervisor virtual-machine controller',
     license='BSD',
