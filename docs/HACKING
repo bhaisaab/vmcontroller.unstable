@@ -1,0 +1,9 @@
+HACKINGS
+========
+
+These are some code writing-hacking rules.
+
+* Indentation: Four whitespaces, no tabs.
+* Filenames: All files name lowercase.
+* Function names: all lowercase, underscores.
+* Variable names: camel-case.

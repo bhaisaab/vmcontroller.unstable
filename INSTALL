@@ -1,0 +1,27 @@
+Building and Installing
+=======================
+
+To install egg, simply run:
+  easy_install <path-to-egg>
+
+To build and install, in the root of the source module, run:
+  python setup.py build
+  python setup.py install
+
+Packaging
+=========
+
+Run the following to create eggs pkgs in 'dist' folder:
+  sh scripts/make-eggs.sh
+
+Testing
+=======
+
+Run:
+  sh build
+
+For using virtualenv: (where, env is the folder name)
+  virtualenv --no-site-packages --distribute env
+  source env/bin/activate
+  <do whatever needs to be done>
+  deactivate
