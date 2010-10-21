@@ -1,5 +1,20 @@
-Building and Installing
-=======================
+Building
+========
+
+Run:
+  sh build.sh
+
+If it shows some error, make sure that zc.buildout is not
+installed in the host environment.
+
+Packaging
+=========
+
+Run the following to create eggs pkgs in 'dist' folder:
+  sh scripts/make-eggs.sh
+
+Installation
+============
 
 To install egg, simply run:
   easy_install <path-to-egg>
@@ -8,17 +23,8 @@ To build and install, in the root of the source module, run:
   python setup.py build
   python setup.py install
 
-Packaging
-=========
-
-Run the following to create eggs pkgs in 'dist' folder:
-  sh scripts/make-eggs.sh
-
 Testing
 =======
-
-Run:
-  sh build
 
 For using virtualenv: (where, env is the folder name)
   virtualenv --no-site-packages --distribute env
