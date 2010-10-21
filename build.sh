@@ -1,0 +1,3 @@
+#!/bin/sh
+python bootstrap.py
+bin/buildout -v
