@@ -4,7 +4,8 @@ VMController project aims at creating a general purpose cross-platform virtual m
 
 History
 =======
-BoincVM was originally written by David Garcia Quintas in 2009 at CERN. VMController is a completely rewritten version of the original BoincVM (http://bitbucket.org/dgquintas/boincvm).
+BoincVM (http://bitbucket.org/dgquintas/boincvm) was originally written by David Garcia Quintas in 2009 at CERN.
+VMController is a completely rewritten version of the original BoincVM.
 
 Information
 ===========
