@@ -10,12 +10,13 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
+from vmcontroller.host import __version__ as VERSION
+
 name = 'vmcontroller.host'
-version = '0.0.1'
 
 setup(
     name=name,
-    version=version,
+    version=VERSION,
     description='Virtual Machine Controller for host operating system',
     long_description=__doc__,
     keywords='hypervisor virtual-machine controller',
@@ -38,7 +39,8 @@ setup(
         'coilmq',
         'simplejson',
         'inject',
-        'uuid'
+        'uuid',
+        'vmcontroller.common'
     ],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -51,6 +53,6 @@ setup(
     ],
     entry_points="""
     [console_scripts]
-    vmcontroller = vmcontroller.host.start:main
+    vmcontroller = vmcontroller.host:main
     """,
 )
