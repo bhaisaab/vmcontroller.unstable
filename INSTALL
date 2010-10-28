@@ -2,7 +2,7 @@ Building
 ========
 
 Run:
-  sh build.sh
+  ./build
 
 If it shows some error, make sure that zc.buildout is not
 installed in the host environment.
@@ -11,7 +11,7 @@ Packaging
 =========
 
 Run the following to create eggs pkgs in 'dist' folder:
-  sh scripts/make-eggs.sh
+  sh scripts/cook-eggs.sh
 
 Installation
 ============
@@ -31,3 +31,6 @@ For using virtualenv: (where, env is the folder name)
   source env/bin/activate
   <do whatever needs to be done>
   deactivate
+
+To run the tests, do:
+  trial tests/

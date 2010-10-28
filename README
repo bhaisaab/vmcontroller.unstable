@@ -1,6 +1,7 @@
 About
 =====
-VMController project aims at creating a general purpose cross-platform virtual machine controller. Presently, the project at supports VirtualBox.
+VMController project aims at creating a general purpose cross-platform virtual machine controller.
+Presently, the project at supports VirtualBox.
 
 History
 =======
@@ -14,20 +15,22 @@ VMController web site . . . http://code.google.com/p/vmcontroller
 Bug Report  . . . . . . . . http://code.google.com/p/vmcontroller/issues/
 Download  . . . . . . . . . http://code.google.com/p/vmcontroller/downloads/
 Wiki  . . . . . . . . . . . http://code.google.com/p/vmcontroller/w/
-Repository  . . . . . . . . https://vmcontroller.googlecode.com/hg/
+Hg Repository   . . . . . . https://vmcontroller.googlecode.com/hg/
 
 Structure
 =========
 
-bootstrap.py             - zc.buildout bootstrap file.
-build.sh                 - Building script for buildout.
-buildout.cfg             - The main buildout config file.
+buildout/bootstrap.py    - zc.buildout bootstrap file.
+buildout/buildout.cfg    - The main buildout config file.
+build                    - Building script for buildout.
 README                   - This file.
 INSTALL                  - General Installation instructions.
-docs/AUTHORS             - Authors List.
-docs/HACKING             - Hacking VMController.
-docs/LICENSE             - The BSD (Simplified) license.
+AUTHORS                  - Authors List.
+HACKING                  - Hacking VMController.
+LICENSE                  - The BSD (Simplified) license.
 scripts/                 - Folders containing script to build, release, clean
 src/                     - The root source folder
 src/vmcontroller.common/ - VMController's common module.
 src/vmcontroller.host/   - VMController's host module.
+src/vmcontroller.vm/     - VMController's guest module.
+tests/                   - Unit tests, based on trial
