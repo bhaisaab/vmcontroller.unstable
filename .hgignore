@@ -10,6 +10,7 @@ bin/
 eggs/
 dist/
 downloads/
+_trial_temp/
 .coverage
 .installed.cfg
 .settings
