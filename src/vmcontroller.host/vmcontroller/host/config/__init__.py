@@ -4,8 +4,13 @@ Configuration support functionality.
 """
 
 import os
-import inject
 import logging
+
+try:
+    import inject
+except ImportError as e:
+    print "Import Error: %s" % e
+    exit()
 
 from ConfigParser import SafeConfigParser
 from pkg_resources import resource_stream
@@ -22,9 +27,8 @@ def init_config():
     config.readfp(resource_stream(__name__, 'default.cfg'))
     return config
 
-@inject.param('config')
 @inject.param('logger')
 def debug_config(config, logger):
     for section in config.sections():
         for option in config.options(section):
-            logger.debug("%s::%s=%s" % (section, option, config.get(section, option)))
+            logger.debug("[%s] %s=%s" % (section, option, config.get(section, option)))

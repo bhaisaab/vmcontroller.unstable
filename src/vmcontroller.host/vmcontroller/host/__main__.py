@@ -7,18 +7,85 @@ import os
 import sys
 import logging
 import warnings
-import inject
+import multiprocessing
+import time
+
+try:
+    import inject
+    from twisted.internet import reactor
+except ImportError, e:
+    print "Import Error: %s" % e
+    exit()
 
 from pkg_resources import resource_stream
 from ConfigParser import SafeConfigParser
 from optparse import OptionParser
-
 from vmcontroller.host.config import *
 
-logger = lambda: logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
+def start_broker(config, server_event, tries=-1, delay=1, backoff=1.5):
+    m_tries = tries
+    m_delay = delay
+    m_server = None
+
+    try:
+        from coilmq.config import config as broker_config
+        import coilmq.start
+    except ImportError, e:
+        print "Import error: %s\nNo broker found, please check." % e
+        exit()
+
+    if config.has_section('broker'):
+        for (attribute, value) in config.items('broker'):
+            broker_config.set('coilmq', attribute, value)
+            logger.debug("[coilmq] %s = %s" % (attribute, value))
+
+    broker_server = None
+    while True:
+        try:
+            broker_server = coilmq.start.server_from_config(broker_config)
+            logger.info("Stomp server listening on %s:%s" % broker_server.server_address)
+            server_event.set()
+            broker_server.serve_forever()
+        except (KeyboardInterrupt, SystemExit):
+            logger.info("Stomp server stopped by user interrupt.")
+            raise SystemExit()
+        except IOError as ex:
+            logger.error("Exception while starting coilmq broker: '%s'", ex)
+            if m_tries != 0: 
+                logger.debug("Retrying coilmq startup in %.1f seconds...", m_delay)
+                time.sleep(m_delay)
+                m_delay *= backoff
+                m_tries -= 1
+            else:
+                logger.debug("Ran out of trials (tried %d times) for coilmq startup. Giving up.", tries)
+                break
+        except Exception, e:
+            logger.error("Stomp server stopped due to error: %s" % e)
+            logger.exception(e)
+            raise SystemExit()
+        finally:
+            if broker_server: broker_server.server_close()
+
+@inject.param('config')
+def start(config, brokerTimeout = 5.0):
+    manager = multiprocessing.Manager()
+    server_event = manager.Event()
+    broker = multiprocessing.Process(target=start_broker, args=(config, server_event))
+    broker.daemon = False
+    broker.name = 'VMController-Broker'
+    broker.start()
+
+    server_event.wait(brokerTimeout)
+    if not server_event.is_set():
+        logger.fatal("Broker not available after %.1f seconds. Giving up", brokerTimeout)
+        return -1
+
+    reactor.run()
 
 def init_logging(logfile=None, loglevel=logging.INFO):
-    format = '%(asctime)s [%(threadName)s] - %(name)s - %(levelname)s - %(message)s'
+    format = '%(asctime)s - [%(threadName)s] %(name)s - (%(levelname)s) %(message)s'
     if logfile:
         logging.basicConfig(filename=logfile, level=loglevel, format=format)
     else:
@@ -56,11 +123,13 @@ def init():
 
     level = logging.DEBUG if options.debug else logging.INFO
     init_logging(logfile=options.logfile, loglevel=level)
-    debug_config()
+
+    debug_config(config)
 
 def main():
+    logger.info("Welcome to VMController Host!")
     init()
-    logger().info("Welcome to VMController Host!")
+    start()
 
 if __name__ == '__main__':
     try:
@@ -68,5 +137,5 @@ if __name__ == '__main__':
     except (KeyboardInterrupt, SystemExit):
         pass
     except Exception, e:
-        logger().error("Server terminated due to error: %s" % e)
-        logger().exception(e)
+        logger.error("Server terminated due to error: %s" % e)
+        logger.exception(e)
