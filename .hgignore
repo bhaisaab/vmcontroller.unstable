@@ -5,6 +5,7 @@ env
 data
 build/
 dist/
+docs/api
 parts/
 develop-eggs/
 bin/
