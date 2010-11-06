@@ -24,7 +24,7 @@ from vmcontroller.host.config import *
 
 logger = logging.getLogger(__name__)
 
-def start_broker(config, server_event, tries=-1, delay=1, backoff=1.5):
+def start_coilmq(config, server_event, tries=-1, delay=1, backoff=1.5):
     m_tries = tries
     m_delay = delay
     m_server = None
@@ -33,13 +33,14 @@ def start_broker(config, server_event, tries=-1, delay=1, backoff=1.5):
         from coilmq.config import config as broker_config
         import coilmq.start
     except ImportError, e:
-        print "Import error: %s\nNo broker found, please check." % e
+        print "Import error: %s\nPlease check." % e
         exit()
 
     if config.has_section('broker'):
         for (attribute, value) in config.items('broker'):
-            broker_config.set('coilmq', attribute, value)
-            logger.debug("[coilmq] %s = %s" % (attribute, value))
+            if attribute != 'name':
+                broker_config.set('coilmq', attribute, value)
+                logger.debug("[coilmq] %s = %s" % (attribute, value))
 
     broker_server = None
     while True:
@@ -69,10 +70,10 @@ def start_broker(config, server_event, tries=-1, delay=1, backoff=1.5):
             if broker_server: broker_server.server_close()
 
 @inject.param('config')
-def start(config, brokerTimeout = 5.0):
+def use_coilmq(config, brokerTimeout=60):
     manager = multiprocessing.Manager()
     server_event = manager.Event()
-    broker = multiprocessing.Process(target=start_broker, args=(config, server_event))
+    broker = multiprocessing.Process(target=start_coilmq, args=(config, server_event))
     broker.daemon = False
     broker.name = 'VMController-Broker'
     broker.start()
@@ -82,10 +83,36 @@ def start(config, brokerTimeout = 5.0):
         logger.fatal("Broker not available after %.1f seconds. Giving up", brokerTimeout)
         return -1
 
+@inject.param('config')
+def use_morbid(config):
+    try:
+        import morbid
+    except ImportError, e:
+        print "Import error: %s\nPlease check." % e
+        exit()
+
+    morbid_factory = morbid.StompFactory(verbose=True)
+    broker_host = config.get('broker', 'host')
+    broker_port = int(config.get('broker', 'port'))
+    logger.info("Starting MorbidQ broker %s:%s", broker_host, broker_port)
+    reactor.listenTCP(broker_port, morbid_factory, interface=broker_host)
+
+@inject.param('config')
+def start(config, brokerTimeout = 5.0):
+    broker_name = config.get('broker', 'name')
+
+    if broker_name == 'morbid':
+        use_morbid()
+    elif broker_name == 'coilmq':
+        use_coilmq()
+    else:
+        logger.fatal("No broker found... Exiting")
+        exit()
+
     reactor.run()
 
 def init_logging(logfile=None, loglevel=logging.INFO):
-    format = '%(asctime)s - [%(threadName)s] %(name)s - (%(levelname)s) %(message)s'
+    format = '%(asctime)s - [%(threadName)s] %(filename)s:%(lineno)s - (%(levelname)s) %(message)s'
     if logfile:
         logging.basicConfig(filename=logfile, level=loglevel, format=format)
     else:
@@ -127,8 +154,8 @@ def init():
     debug_config(config)
 
 def main():
-    logger.info("Welcome to VMController Host!")
     init()
+    logger.info("Welcome to VMController Host!")
     start()
 
 if __name__ == '__main__':
