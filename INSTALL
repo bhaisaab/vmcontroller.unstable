@@ -7,6 +7,17 @@ Run:
 If it shows some error, make sure that zc.buildout is not
 installed in the host environment.
 
+Building docs
+=============
+
+Install epydoc, if you don't have:
+  easy_install epydoc
+
+Build API docs:
+epydoc --config=docs/epydoc.cfg
+
+The docs will be generated in /docs/api
+
 Packaging
 =========
 
