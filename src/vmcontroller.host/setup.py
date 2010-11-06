@@ -37,6 +37,7 @@ setup(
         'stomper==0.2.2',
         'netifaces',
         'coilmq',
+        'morbid',
         'simplejson',
         'inject',
         'uuid',
