@@ -54,6 +54,6 @@ setup(
     ],
     entry_points="""
     [console_scripts]
-    vmcontroller = vmcontroller.host:main
+    vmcontroller-host = vmcontroller.host:main
     """,
 )

@@ -1,6 +1,6 @@
 '''
 VMController is a general purpose virtual machine controller written in Python.\n
-vmcontroller.vm is the module that runs on the guest operating system.
+vmcontroller.guest is the module that runs on the guest operating system.
 '''
 
 try:
@@ -10,7 +10,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-name = 'vmcontroller.vm'
+name = 'vmcontroller.guest'
 version = '0.0.1'
 
 setup(
@@ -51,6 +51,6 @@ setup(
     ],
     entry_points="""
     [console_scripts]
-    vmcontroller-vm = vmcontroller.vm.start:main
+    vmcontroller-guest = vmcontroller.guest:main
     """,
 )
