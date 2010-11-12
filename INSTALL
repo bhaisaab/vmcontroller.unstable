@@ -14,7 +14,7 @@ Install epydoc, if you don't have:
   easy_install epydoc
 
 Build API docs:
-epydoc --config=docs/epydoc.cfg
+  epydoc --config=docs/epydoc.cfg
 
 The docs will be generated in /docs/api
 

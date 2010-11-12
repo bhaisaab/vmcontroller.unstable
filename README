@@ -32,5 +32,5 @@ scripts/                 - Folders containing script to build, release, clean
 src/                     - The root source folder
 src/vmcontroller.common/ - VMController's common module.
 src/vmcontroller.host/   - VMController's host module.
-src/vmcontroller.vm/     - VMController's guest module.
+src/vmcontroller.guest/  - VMController's guest module.
 tests/                   - Unit tests, based on trial
