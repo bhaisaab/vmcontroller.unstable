@@ -1,12 +1,12 @@
 About
 =====
 VMController project aims at creating a general purpose cross-platform virtual machine controller.
-Presently, the project at supports VirtualBox.
+Presently, the project supports VirtualBox only.
 
 History
 =======
 BoincVM (http://bitbucket.org/dgquintas/boincvm) was originally written by David Garcia Quintas in 2009 at CERN.
-VMController is a completely rewritten version of the original BoincVM.
+VMController is based on the original BoincVM.
 
 Information
 ===========

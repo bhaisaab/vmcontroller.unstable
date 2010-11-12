@@ -4,19 +4,11 @@ Building
 Run:
   ./build
 
+It will build runnable scripts in /buildout/bin/
+cd to that folder and enjoy hacking.
+
 If it shows some error, make sure that zc.buildout is not
 installed in the host environment.
-
-Building docs
-=============
-
-Install epydoc, if you don't have:
-  easy_install epydoc
-
-Build API docs:
-  epydoc --config=docs/epydoc.cfg
-
-The docs will be generated in /docs/api
 
 Packaging
 =========
@@ -33,6 +25,17 @@ To install egg, simply run:
 To build and install, in the root of the source module, run:
   python setup.py build
   python setup.py install
+
+Building docs
+=============
+
+Install epydoc, if you don't have:
+  easy_install epydoc
+
+Build API docs:
+  epydoc --config=docs/epydoc.cfg
+
+The docs will be generated in /docs/api
 
 Testing
 =======
