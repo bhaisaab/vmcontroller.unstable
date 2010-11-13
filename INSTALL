@@ -5,9 +5,13 @@ Run:
   ./build
 
 It will build runnable scripts in /buildout/bin/
-cd to that folder and enjoy hacking.
+Go to this folder and run scripts:
+  cd buildout/bin
+  ./vmcontroller-host --debug
 
-If it shows some error, make sure that zc.buildout is not
+Enjoy hacking!
+
+If the build script shows some error, make sure zc.buildout is not
 installed in the host environment.
 
 Packaging
@@ -40,11 +44,11 @@ The docs will be generated in /docs/api
 Testing
 =======
 
+To run the tests, do:
+  trial tests/
+
 For using virtualenv: (where, env is the folder name)
   virtualenv --no-site-packages --distribute env
   source env/bin/activate
   <do whatever needs to be done>
   deactivate
-
-To run the tests, do:
-  trial tests/
