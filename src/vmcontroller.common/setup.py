@@ -10,18 +10,19 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
+from vmcontroller.common import __version__ as VERSION
+
 name = 'vmcontroller.common'
-version = '0.0.1'
 
 setup(
     name=name,
-    version=version,
+    version=VERSION,
     description='Virtual Machine Controller',
     long_description=__doc__,
     keywords='hypervisor virtual-machine controller',
     license='BSD',
-    author='Rohit Yadav, David Garcia Quintas',
-    author_email='rohityadav89@gmail.com, dgquintas@gmail.com',
+    author='David Garcia Quintas, Rohit Yadav',
+    author_email='dgquintas@gmail.com, rohityadav89@gmail.com',
     url='http://code.google.com/p/vmcontroller',
     packages=find_packages(exclude=['ez_setup', 'distribute_setup', 'tests', 'tests.*']),
     package_data={'vmcontroller': ['config/*.cfg*', 'tests/resources/*']},
