@@ -2,9 +2,9 @@
 VMController, a general purpose virtual machine controller written in Python.
 """
 
-__version__ = '0.0.2'
-__authors__ = ['"Rohit Yadav" <rohityadav89@gmail.com>', 
-               '"David Garcia Quintas" <dgquintas@gmail.com>']
+__version__ = '0.1.0'
+__authors__ = ['"David Garcia Quintas" <dgquintas@gmail.com>', 
+               '"Rohit Yadav" <rohityadav89@gmail.com>']
 __copyright__ = "Copyright 2010 VMController Authors"
 __license__ = """Licensed under the (Simplified) BSD License
 you may not use this project "VMController" except in compliance with the License. You may obtain a copy of the License at
@@ -22,5 +22,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from __main__ import *
+try:
+    from __main__ import *
+except ImportError, e:
+    pass
 
