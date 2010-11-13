@@ -25,5 +25,6 @@ if [ ! -f $HOST_SCRIPT ]; then
   echo "Oops, something went wrong... console scripts not created :(";
   exit
 else
-  echo "VMController console scripts created... run $HOST_SCRIPT [--debug] and enjoy hacking!";
+  echo "VMController console scripts created...";
+  echo "Run $HOST_SCRIPT [--debug] and enjoy hacking!";
 fi
