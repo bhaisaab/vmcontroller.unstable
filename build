@@ -1,4 +1,29 @@
 #!/bin/sh
-cd buildout
-python bootstrap.py
-bin/buildout -v
+
+BOOTSTRAP_FILE=bootstrap.py
+BUILDOUT_FILE=bin/buildout
+HOST_SCRIPT=bin/vmcontroller-host
+
+echo "Bootstrapping zc.buildout..."
+
+if [ ! -f $BUILDOUT_FILE ]; then
+  mkdir -p bin
+  python $BOOTSTRAP_FILE -v 1.5.0
+  if [ ! -f $BUILDOUT_FILE ]; then
+    echo "Oops, something went wrong...";
+    exit
+  else
+    echo "Done! Now running buildout to generate VMController console scripts...";
+    bin/buildout -v
+  fi
+else
+  echo "Generating VMController console scripts in offline mode...";
+  bin/buildout -v -o
+fi
+
+if [ ! -f $HOST_SCRIPT ]; then
+  echo "Oops, something went wrong... console scripts not created :(";
+  exit
+else
+  echo "VMController console scripts created... run $HOST_SCRIPT [--debug] and enjoy hacking!";
+fi
