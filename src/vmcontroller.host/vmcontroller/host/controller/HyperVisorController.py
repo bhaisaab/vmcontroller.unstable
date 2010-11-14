@@ -1,4 +1,5 @@
-""" Instantiates the apropriate controller.
+"""
+Instantiates the apropriate controller.
 
 It follows the naming convention defined by appending 
 the hypervisor name, as gotten from the provided configuration, 
@@ -7,82 +8,163 @@ with "Controller". Such a class must be exist and be accesible.
 Note that if the controller class resides in a different package,
 its name must include the package name as well.
 """
-from vmcontroller.common import support, exceptions
-
-from twisted.internet import defer
 
 import logging
 import inject
 
-logger = logging.getLogger( support.discoverCaller() )
+from twisted.internet import defer
+from vmcontroller.common import support, exceptions
 
 CONTROLLERS_PATH = "hypervisors" #relative to this file
 
+logger = logging.getLogger( support.discoverCaller() )
+
 @inject.param('config')
 def _createController(config):
-  """ Creates the appropriate (hypervisor) controller based on the
-      given configuration. 
+    """
+    Creates the appropriate (hypervisor) controller based on the
+    given configuration. 
 
-      This is the place where to perform particular initialization tasks for 
-      the particular hypervisor controller implementations.
+    This is the place where to perform particular initialization tasks for 
+    the particular hypervisor controller implementations.
 
-      @param config: an instance of L{ConfigParser}
-  """
-  hv = config.get('hypervisor', 'name')
-  logger.debug("Hypervisor specified in config: '%s'" % hv)
-  fqHvName = "%s.%s" % (CONTROLLERS_PATH, hv)
+    @param config: an instance of L{ConfigParser}
+    """
+    hv = config.get('hypervisor', 'name')
+    hvMod = None
+    logger.debug("Hypervisor specified in config: '%s'" % hv)
+    fqHvName = "%s.%s" % (CONTROLLERS_PATH, hv)
   
-  try:
-    hvPkg = __import__(fqHvName, globals=globals(), level=-1)
-    hvMod = getattr(hvPkg, hv)
-  except ImportError:
-    msg = "Hypervisor '%s' is not supported" % hv
-    logger.fatal(msg)
-    raise exceptions.ConfigError(msg)
+    try:
+        hvPkg = __import__(fqHvName, globals=globals(), level=-1)
+        hvMod = getattr(hvPkg, hv)
+    except ImportError:
+        msg = "Hypervisor '%s' is not supported" % hv
+        logger.fatal(msg)
+        raise exceptions.ConfigError(msg)
 
-  logger.info("Using %s as the HyperVisor" % hvMod.__name__)
+    logger.info("Using %s as the HyperVisor" % hvMod.__name__)
 
-  return hvMod 
+    return hvMod 
 
 _controller = None
 def getController():
-  global _controller
-  if not _controller:
-    _controller = _createController()
+    global _controller
+    if not _controller:
+        _controller = _createController()
 
-  return _controller
+    return _controller
+
+def createVM(vm, image):
+    """
+    Creates virtual machine with given parameters.
+    @param vm: Virtual machine's name.
+    @param image: Path to the virtual machine's image
+    """
+    return defer.maybeDeferred( getController().createVM, vm, image )
+
+def removeVM(vm):
+    """
+    Removes virtual machine. NOTE: This operation is undo-able.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().removeVM, vm)
 
 def start(vm):
-  """start(vm)"""
-  return defer.maybeDeferred( getController().start, vm )
+    """
+    Starts virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().start, vm )
+
+def shutdown(vm):
+    """
+    Shutdown virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().shutdown, vm )
+
+#def sleep(vm):
+#    """
+#    Sends ACPI sleep signal to virtual machine.
+#    @param vm: Virtual machine's name.
+#    """
+#    return defer.maybeDeferred( getController().sleep, vm )
+
+def reset(vm):
+    """
+    Sends ACPI power reset signal to virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().reset, vm )
 
 def powerOff(vm):
-  """powerOff(vm)"""
-  return defer.maybeDeferred( getController().powerOff, vm )
+    """
+    Turn off virtual machine, without a proper shutdown.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().powerOff, vm )
 
 def pause(vm): 
-  """pause(vm)"""
-  return defer.maybeDeferred( getController().pause, vm )
+    """
+    Pauses running virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().pause, vm )
 
-def unpause(vm):
-  """unpause(vm)"""
-  return defer.maybeDeferred( getController().unpause, vm )
-
-def saveState(vm):
-  """saveState(vm)"""
-  return defer.maybeDeferred( getController().saveState, vm )
+def resume(vm):
+    """
+    Resumes a paused virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().resume, vm )
 
 def getState(vm):
-  """getState(vm)"""
-  return defer.maybeDeferred( getController().getState, vm )
+    """
+    Returns state of a virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().getState, vm )
 
-def saveSnapshot(vm, name, desc = ""):
-  """saveSnapshot(vm, name, desc = "")"""
-  return defer.maybeDeferred( getController().saveSnapshot, vm, name, desc )
+def saveState(vm):
+    """
+    Saves state of the virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().saveState, vm )
 
-def restoreSnapshot(vm):
-  """restoreSnapshot(vm)"""
-  return defer.maybeDeferred( getController().restoreSnapshot, vm )
+def discardState(vm):
+    """
+    Discards any saved state of the virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().discardState, vm )
+
+def takeSnapshot(vm, name, desc = ""):
+    """
+    Saves snapshot of current virtual machines vm state.
+    @param vm: Virtual machine's name.
+    @param name: Name of the snapshot.
+    @param desc: Snapshot's description.
+    """
+    return defer.maybeDeferred( getController().takeSnapshot, vm, name, desc )
+
+#FIXME: Restore last saved snapshot only
+def restoreSnapshot(vm, name, desc = ""):
+    """
+    Restores snapshot
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().restoreSnapshot, vm, name, desc )
+
+#FIXME: some gid err
+def deleteSnapshot(vm, name):
+    """
+    Saves snapshot of current virtual machines vm state.
+    @param vm: Virtual machine's name.
+    @param name: Name of the snapshot.
+    """
+    return defer.maybeDeferred( getController().deleteSnapshot, vm, name )
 
 def listAvailableVMs():
   """listAvailableVMs()"""
@@ -93,19 +175,15 @@ def listRunningVMs():
   return defer.maybeDeferred( getController().listRunningVMs )
 
 def getNamesToIdsMapping():
-  """getNamesToIdsMapping"""
-  return defer.maybeDeferred( getController().getNamesToIdsMapping )
+    """getNamesToIdsMapping"""
+    return defer.maybeDeferred( getController().getNamesToIdsMapping )
 
 def getIdsToNamesMapping(): 
-  """getIdsToNamesMapping"""
-  return defer.maybeDeferred( getController().getIdsToNamesMapping )
+    """getIdsToNamesMapping"""
+    return defer.maybeDeferred( getController().getIdsToNamesMapping )
 
 def getPerformanceData(vm):
-  """getPerformanceData(vm)"""
-  return defer.maybeDeferred( getController().getPerformanceData, vm)
-
-def createVM(name, hddImagePath):
-  """ """
-  return defer.maybeDeferred( getController().createVM, name, hddImagePath ) 
+    """getPerformanceData(vm)"""
+    return defer.maybeDeferred( getController().getPerformanceData, vm)
 
 
