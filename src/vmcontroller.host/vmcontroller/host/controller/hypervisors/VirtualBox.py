@@ -8,7 +8,6 @@ import platform
 import sys
 import uuid
 import pdb
-import inject
 
 from twisted.internet import protocol, reactor, defer, threads
 from vmcontroller.common import support, exceptions
