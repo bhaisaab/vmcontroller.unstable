@@ -1,9 +1,6 @@
 """ Controller for the VirtualBox hypervisor.
 
 """
-from vmcontroller.common import support, exceptions
-
-from twisted.internet import protocol, reactor, defer, threads
 
 import logging
 import os
@@ -11,131 +8,245 @@ import platform
 import sys
 import uuid
 import pdb
+import inject
 
+from twisted.internet import protocol, reactor, defer, threads
+from vmcontroller.common import support, exceptions
 
-WAITING_GRACE_MS = 3000  #FIXME: magic number of milliseconds
+WAITING_GRACE_MS = 5000  #FIXME: magic number of milliseconds
 
 logger = logging.getLogger(__name__)
 
 
 ######## PUBLIC API ################
 
-def start(vm):
-  #what an ugly hack this is...
-  if platform.system() != "Windows":
+def createVM(name, hddImagePath):
+    vbox = _ctx['vbox']
+    mgr = _ctx['mgr']
     def impl():
-      session = _ctx['mgr'].getSessionObject(_ctx['vbox'])
-      mach = _findMachineByNameOrId(vm)
+        ms = _getMachines()
+        for m in ms:
+            if m.name == name:
+              raise ValueError("VM '%s' already exists" % name)
+        guestType = vbox.getGuestOSType('Linux26') 
+        newMachine = vbox.createMachine(name, guestType.id, "", "00000000-0000-0000-0000-000000000000", False)
+        if not os.path.isfile( hddImagePath ):
+            raise IOError("HDD image path doesn't point to a valid file: %s" % hddImagePath )
+          
+        try:
+            newMachine.saveSettings()
+            #register the machine with VB (ie, make it visible)
+            vbox.registerMachine( newMachine )
+            
+            session = mgr.getSessionObject(vbox)
+            vbox.openSession( session, newMachine.id )
+            mutableM = session.machine
+            _attachNICs( mutableM )
+            _addSCSIStorageController( mutableM )
+            _attachHDToMachine( mutableM, hddImagePath )
+        except: 
+            if session.state == _ctx['ifaces'].SessionState_Open :
+                session.close()
 
-      logger.info("Starting VM for machine %s" % mach.name)
+            m = vbox.unregisterMachine(newMachine.id)
+            m.deleteSettings()
+            msg = "Rolled back creation of VM '%s'" % m.name
+            logger.debug(msg)
 
-      progress = _ctx['vbox'].openRemoteSession(session, mach.id, "vrdp", "")
-      progress.waitForCompletion(WAITING_GRACE_MS) 
-      completed = progress.completed
-      if completed and (progress.resultCode == 0):
-        logger.info("Startup of machine %s completed: %s" % (mach.name, str(completed)))
-      else:
-        _reportError(progress)
-        return False
+            #the following two lines should go in a finally:,
+            #but that's not supported by python 2.4
+            if session.state == _ctx['ifaces'].SessionState_Open:
+                session.close()
 
-      session.close() 
-      return True 
+            raise
 
-    d = threads.deferToThread(impl)
+        #the following two lines should go in a finally:,
+        #but that's not supported by python 2.4
+        if session.state == _ctx['ifaces'].SessionState_Open:
+            session.close()
+
+        return (True, name)
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
+
+# TODO: fix it
+def removeVM(vm):
+    def impl():
+        session = _getSessionForVM(vm)
+        mach = session.machine
+        id = mach.id
+        name = mach.name
+
+        atts = _ctx['vboxmgr'].getArray( mach, 'mediumAttachments' )
+        mediums = []
+        for a in atts:
+            if a.medium:
+                mach.detachDevice(a.controller, a.port, a.device)
+                mediums.append( a.medium )
+        mach.saveSettings()
+        session.close()
+
+        mach = _ctx['vbox'].unregisterMachine( id )
+        if mach:
+            mach.deleteSettings()
+
+        for m in mediums:
+            m.close()
+
+        return (True, name)
+
+    d = threads.deferToThread( impl )
+    return d
+
+def start(vm):
+    #what an ugly hack this is...
+    if platform.system() != "Windows":
+        def impl():
+            session = _ctx['mgr'].getSessionObject(_ctx['vbox'])
+            mach = _findMachineByNameOrId(vm)
+
+            logger.info("Starting VM for machine %s" % mach.name)
+
+            progress = _ctx['vbox'].openRemoteSession(session, mach.id, "vrdp", "")
+            progress.waitForCompletion(WAITING_GRACE_MS) 
+            completed = progress.completed
+            if completed and (progress.resultCode == 0):
+                logger.info("Startup of machine %s completed: %s" % (mach.name, str(completed)))
+            else:
+                _reportError(progress)
+                return False
+
+            session.close() 
+            return True 
+
+        d = threads.deferToThread(impl)
+      
+    else: 
+        m = _findMachineByNameOrId(vm)
+        mName = str(m.name)
+        processProtocol = VBoxHeadlessProcessProtocol()
+        pseudoCWD = os.path.dirname(sys.modules[__name__].__file__)
+        vboxBinariesPath = None #TODO: use VBOX_INSTALL_PATH
+        cmdWithPath = os.path.join(pseudoCWD, 'scripts', 'vboxstart.bat')
+        cmdWithArgs = ("vboxstart.bat", vboxBinariesPath, mName)
+        cmdPath = os.path.join(pseudoCWD, 'scripts')
+        newProc = lambda: reactor.spawnProcess( processProtocol, cmdWithPath, args=cmdWithArgs, env=None, path=cmdPath )
+        reactor.callWhenRunning(newProc)
+        d = True #in order to have a unique return 
+
+    try:
+        _startCollectingPerfData(vm)
+    except:
+        pass #TODO: loggging
     
-  else: 
-    m = _findMachineByNameOrId(vm)
-    mName = str(m.name)
-    processProtocol = VBoxHeadlessProcessProtocol()
-    pseudoCWD = os.path.dirname(sys.modules[__name__].__file__)
-    vboxBinariesPath = None #TODO: use VBOX_INSTALL_PATH
-    cmdWithPath = os.path.join(pseudoCWD, 'scripts', 'vboxstart.bat')
-    cmdWithArgs = ("vboxstart.bat", vboxBinariesPath, mName)
-    cmdPath = os.path.join(pseudoCWD, 'scripts')
-    newProc = lambda: reactor.spawnProcess( processProtocol, cmdWithPath, args=cmdWithArgs, env=None, path=cmdPath )
-    reactor.callWhenRunning(newProc)
-    d = True #in order to have a unique return 
-
-  try:
-    _startCollectingPerfData(vm)
-  except:
-    pass #TODO: loggging
-  
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  return d
-
-
-def powerOff(vm):
-  def impl():
-    return _execProgressCmd(vm, 'powerOff', None)
-
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
-
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    return d
 
 def shutdown(vm):
-  def impl():
-    return _execProgressCmd(vm, 'shutdown', None)
+    def impl():
+        return _execProgressCmd(vm, 'shutdown', None)
 
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
+#def sleep(vm):
+#    def impl():
+#        return _execProgressCmd(vm, 'sleep', None)
+#
+#    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+#    d = threads.deferToThread( impl )
+#    return d
+
+#FIXME: ugly absurd bla bla fix
+def reset(vm):
+    def impl():
+        return _execProgressCmd(vm, 'reset', None)
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
+
+def powerOff(vm):
+    def impl():
+        return _execProgressCmd(vm, 'powerOff', None)
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
 def pause(vm): 
-  def impl():
-    return _execProgressCmd(vm, 'pause', None)
+    def impl():
+        return _execProgressCmd(vm, 'pause', None)
 
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
-def unpause(vm): 
-  def impl():
-    return _execProgressCmd(vm, 'unpause', None)
+def resume(vm):
+    def impl():
+        return _execProgressCmd(vm, 'resume', None)
 
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
-
-
-def saveState(vm):
-  def impl():
-    return _execProgressCmd(vm, 'saveState', None)
-
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
-
-
-def saveSnapshot( vm, name, desc):
-  def impl():
-    return _execProgressCmd(vm, 'saveSnapshot', (name, desc))
-
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
-
-def restoreSnapshot(vm):
-  def impl():
-    return _execProgressCmd(vm, 'restoreSnapshot', (name, desc))
-
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
 def getState( vm): 
-  def impl():
-    m = _ctx['vbox'].findMachine(vm)
-    stateCode = m.state
-    stateName = _getNameForMachineStateCode(stateCode)
-    return stateName
+    def impl():
+        m = _ctx['vbox'].findMachine(vm)
+        stateCode = m.state
+        stateName = _getNameForMachineStateCode(stateCode)
+        return stateName
 
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread(impl)
-  
-  return d
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread(impl) 
+    return d
+
+def saveState(vm):
+    def impl():
+        return _execProgressCmd(vm, 'saveState', None)
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
+
+def discardState(vm):
+    def impl():
+        return _execProgressCmd(vm, 'discardState', None)
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
+
+def takeSnapshot(vm, name, desc):
+    def impl():
+        return _execProgressCmd(vm, 'takeSnapshot', (name, desc))
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
+
+#TODO: Read and see docs from ISnapshot, give snapshot as arg
+def restoreSnapshot(vm, name, desc=""):
+    def impl():
+        return _execProgressCmd(vm, 'restoreSnapshot', (name, desc))
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
+
+#FIXME: ID from Name
+def deleteSnapshot(vm, name):
+    snapshotId = getNamesToIdsMapping().get(name)
+    logger.debug("Deleting snapshot named '%s' with Id: %s" % (name, snapshotId) )
+    def impl():
+        return _execProgressCmd(vm, 'deleteSnapshot', (snapshotId))
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
 def listAvailableVMs():
   def impl():
@@ -173,102 +284,22 @@ def listRunningVMs():
   return d
 
 def getNamesToIdsMapping(): 
-  macToName = _getMACToNameMapping()
-  nameToMac = support.reverseDict(macToName)
-  return nameToMac
+    macToName = _getMACToNameMapping()
+    nameToMac = support.reverseDict(macToName)
+    return nameToMac
 
-def getIdsToNamesMapping(): 
-  macToName = _getMACToNameMapping()
-  return macToName
+def getIdsToNamesMapping():
+    macToName = _getMACToNameMapping()
+    return macToName
 
-
+#FIXME: _perf not defined
 def getPerformanceData(vm):
-  def impl():
-    return _perf.query( ["*"], [vm] )
-    
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread(impl)
-  return d
-  
-
-def createVM(name, hddImagePath):
-  vbox = _ctx['vbox']
-  mgr = _ctx['mgr']
-  def impl():
-    ms = _getMachines()
-    for m in ms:
-      if m.name == name:
-        raise ValueError("VM '%s' already exists" % name)
-    guestType = vbox.getGuestOSType('Linux26') 
-    newMachine = vbox.createMachine(name, guestType.id, "", "00000000-0000-0000-0000-000000000000", False)
-    if not os.path.isfile( hddImagePath ):
-      raise IOError("HDD image path doesn't point to a valid file: %s" % hddImagePath )
+    def impl():
+        return _perf.query( ["*"], [vm] )
       
-    try:
-      newMachine.saveSettings()
-      #register the machine with VB (ie, make it visible)
-      vbox.registerMachine( newMachine )
-      
-      session = mgr.getSessionObject(vbox)
-      vbox.openSession( session, newMachine.id )
-      mutableM = session.machine
-      _attachNICs( mutableM )
-      _addSCSIStorageController( mutableM )
-      _attachHDToMachine( mutableM, hddImagePath )
-    except: 
-      if session.state == _ctx['ifaces'].SessionState_Open :
-        session.close()
-
-      m = vbox.unregisterMachine(newMachine.id)
-      m.deleteSettings()
-      msg = "Rolled back creation of VM '%s'" % m.name
-      logger.debug(msg)
-
-      #the following two lines should go in a finally:,
-      #but that's not supported by python 2.4
-      if session.state == _ctx['ifaces'].SessionState_Open:
-        session.close()
-
-      raise
-
-    #the following two lines should go in a finally:,
-    #but that's not supported by python 2.4
-    if session.state == _ctx['ifaces'].SessionState_Open:
-      session.close()
-
-    return (True, name)
-
-  logger.debug("Controller method %s invoked" % support.discoverCaller() )
-  d = threads.deferToThread( impl )
-  return d
-
-def destroyVM(vm):
-  def impl():
-    session = _getSessionForVM(vm)
-    mach = session.machine
-    id = mach.id
-    name = mach.name
-
-    atts = _ctx['vboxmgr'].getArray( mach, 'mediumAttachments' )
-    mediums = []
-    for a in atts:
-      if a.medium:
-        mach.detachDevice(a.controller, a.port, a.device)
-        mediums.append( a.medium )
-    mach.saveSettings()
-    session.close()
-
-    mach = _ctx['vbox'].unregisterMachine( id )
-    if mach:
-      mach.deleteSettings()
-
-    for m in mediums:
-      m.close()
-
-    return (True, name)
-
-  d = threads.deferToThread( impl )
-  return d
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread(impl)
+    return d
 
 
 ######### internal methods follow #################
@@ -431,14 +462,20 @@ def _execProgressCmd(vm,cmd,args):
 
     console=session.console
     mach=session.machine
-    ops={'pause':           lambda: console.pause(),
-         'unpause':         lambda: console.resume(),
-         'powerOff':        lambda: console.powerDown(),
+    ops={
+         'start':           lambda: console.powerUp(),
          'shutdown':        lambda: console.powerButton(),
-         #'stats':          lambda: perfStats(ctx, mach),
+         #'sleep':           lambda: console.sleepButton(),
+         'reset':           lambda: console.reset(),
+         'powerOff':        lambda: console.powerDown(),
+         'pause':           lambda: console.pause(),
+         'resume':          lambda: console.resume(),
          'saveState':       lambda: console.saveState(),
-         'saveSnapshot':    lambda: console.takeSnapshot(args[0], args[1]) ,
-         'restoreSnapshot': lambda: console.discardCurrentState(),
+         'discardState':    lambda: console.forgetSavedState(True), # True: Saved state file is deleted
+         'takeSnapshot':    lambda: console.takeSnapshot(args[0], args[1]) ,
+         'restoreSnapshot': lambda: console.restoreSnapshot(),
+         'deleteSnapshot':  lambda: console.deleteSnapshot(args[0]),
+         #'stats':          lambda: perfStats(ctx, mach),
          #'plugcpu':     lambda: plugCpu(ctx, session.machine, session, args),
          #'unplugcpu':   lambda: unplugCpu(ctx, session.machine, session, args),
          }
