@@ -1,8 +1,14 @@
-from vmcontroller.common import support, exceptions, BaseWord, destinations, EntityDescriptor
 
-import uuid
-import inspect
-import sys
+try:
+    import uuid
+    import inspect
+    import sys
+
+    from vmcontroller.common import support, exceptions, BaseWord, destinations, EntityDescriptor
+except ImportError, e:
+    print "Import Error: %s" % e
+    import sys
+    sys.exit()
 
 def getWords():
   currentModule = sys.modules[__name__]

@@ -2,17 +2,16 @@
 Configuration support functionality.
 """
 
-import os
-import logging
-
 try:
+    import os
+    import logging
     import inject
+
+    from ConfigParser import SafeConfigParser
+    from pkg_resources import resource_stream
 except ImportError as e:
     print "Import Error: %s" % e
     exit()
-
-from ConfigParser import SafeConfigParser
-from pkg_resources import resource_stream
 
 logger = logging.getLogger(__name__)
 

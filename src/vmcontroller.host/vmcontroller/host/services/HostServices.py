@@ -4,18 +4,23 @@ This module isn't meant to be used directly, but rather through the exposed
 XMLRPC facade.
 """
 
-from vmcontroller.common import support, exceptions
-from vmcontroller.host.controller import HyperVisorController
-from vmcontroller.common import EntityDescriptor
+try:
+    import logging
+    import inject
+    import time
+    import uuid
+    import inspect
 
-from twisted.internet import defer, reactor
-from twisted.web import xmlrpc, server, resource
+    from twisted.internet import defer, reactor
+    from twisted.web import xmlrpc, server, resource
 
-import logging
-import inject
-import time
-import uuid
-import inspect
+    from vmcontroller.common import support, exceptions
+    from vmcontroller.host.controller import HyperVisorController
+    from vmcontroller.common import EntityDescriptor
+except ImportError, e:
+    print "Import Error: %s" % e
+    import sys
+    sys.exit()
 
 @inject.appscope
 class VMRegistry(object):

@@ -3,28 +3,28 @@
 VMController Host - a general purpose host-side virtual machine controller via exposed hypervisors apis.
 """
 
-import os
-import sys
-import logging
-import warnings
-import multiprocessing
-import time
-
 try:
+    import os
+    import sys
+    import logging
+    import warnings
+    import multiprocessing
+    import time
     import inject
+
     from twisted.internet import reactor
+    from pkg_resources import resource_stream
+    from ConfigParser import SafeConfigParser
+    from optparse import OptionParser
+
+    from vmcontroller.common import StompProtocolFactory, StompProtocol
+    from vmcontroller.host.config import init_config, init_config_file, debug_config
+    from vmcontroller.host.controller import HyperVisorController
+    from vmcontroller.host.services import HostStompEngine, HostWords, HostServices
 except ImportError, e:
     print "Import Error: %s" % e
-    exit()
-
-from pkg_resources import resource_stream
-from ConfigParser import SafeConfigParser
-from optparse import OptionParser
-
-from vmcontroller.common import StompProtocolFactory, StompProtocol
-from vmcontroller.host.config import init_config, init_config_file, debug_config
-from vmcontroller.host.controller import HyperVisorController
-from vmcontroller.host.services import HostStompEngine, HostWords, HostServices
+    import sys
+    sys.exit()
 
 logger = logging.getLogger(__name__)
 

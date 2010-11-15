@@ -9,11 +9,16 @@ Note that if the controller class resides in a different package,
 its name must include the package name as well.
 """
 
-import logging
-import inject
+try:
+    import logging
+    import inject
 
-from twisted.internet import defer
-from vmcontroller.common import support, exceptions
+    from twisted.internet import defer
+    from vmcontroller.common import support, exceptions
+except ImportError, e:
+    print "Import Error: %s" % e
+    import sys
+    sys.exit()
 
 CONTROLLERS_PATH = "hypervisors" #relative to this file
 
@@ -38,8 +43,8 @@ def _createController(config):
     try:
         hvPkg = __import__(fqHvName, globals=globals(), level=-1)
         hvMod = getattr(hvPkg, hv)
-    except ImportError:
-        msg = "Hypervisor '%s' is not supported" % hv
+    except ImportError, e:
+        msg = "Hypervisor '%s' is not supported. Error: %s" % (hv, e)
         logger.fatal(msg)
         raise exceptions.ConfigError(msg)
 

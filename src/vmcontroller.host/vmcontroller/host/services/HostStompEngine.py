@@ -1,17 +1,18 @@
-import time
-import pdb
-import logging
 
 try:
+    import time
+    import pdb
+    import logging
     import inject
     import stomper
+
+    from vmcontroller.common import BaseStompEngine 
+    from vmcontroller.common import support, exceptions 
+    from vmcontroller.common import destinations
 except ImportError, e:
     print "Import Error: %s" % e
-    exit()
-
-from vmcontroller.common import BaseStompEngine 
-from vmcontroller.common import support, exceptions 
-from vmcontroller.common import destinations
+    import sys
+    sys.exit()
 
 #@inject.appscope
 class HostStompEngine(BaseStompEngine):

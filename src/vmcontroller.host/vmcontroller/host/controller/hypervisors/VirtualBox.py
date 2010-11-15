@@ -2,15 +2,20 @@
 
 """
 
-import logging
-import os
-import platform
-import sys
-import uuid
-import pdb
+try:
+    import logging
+    import os
+    import platform
+    import sys
+    import uuid
+    import pdb
 
-from twisted.internet import protocol, reactor, defer, threads
-from vmcontroller.common import support, exceptions
+    from twisted.internet import protocol, reactor, defer, threads
+    from vmcontroller.common import support, exceptions
+except ImportError, e:
+    print "Import Error: %s" % e
+    import sys
+    sys.exit()
 
 WAITING_GRACE_MS = 5000  #FIXME: magic number of milliseconds
 
