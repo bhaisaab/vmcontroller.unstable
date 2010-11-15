@@ -10,13 +10,14 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-from vmcontroller.common import __version__ as VERSION
+from vmcontroller.common import __version__
 
 name = 'vmcontroller.common'
+version = __version__
 
 setup(
     name=name,
-    version=VERSION,
+    version=version,
     description='Virtual Machine Controller',
     long_description=__doc__,
     keywords='hypervisor virtual-machine controller',

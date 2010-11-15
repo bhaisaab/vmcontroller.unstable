@@ -22,11 +22,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import support
-import exceptions
-import destinations
-from EntityDescriptor import *
-from BaseStompEngine import *
-from StompProtocol import *
-from StompProtocolFactory import *
-from BaseWord import *
+try:
+    import support
+    import exceptions
+    import destinations
+    from EntityDescriptor import *
+    from BaseStompEngine import *
+    from StompProtocol import *
+    from StompProtocolFactory import *
+    from BaseWord import *
+except ImportError, e:
+    pass
