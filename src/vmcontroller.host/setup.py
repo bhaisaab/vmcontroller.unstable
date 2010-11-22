@@ -10,10 +10,10 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-from vmcontroller.host import __version__
+#from vmcontroller.host import __version__
 
 name = 'vmcontroller.host'
-version = __version__
+version = '0.1.0' #__version__
 
 setup(
     name=name,
