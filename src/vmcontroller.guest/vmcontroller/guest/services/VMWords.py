@@ -28,7 +28,9 @@ class PONG(BaseWord):
   def howToSay(self, pingMsg):
     headers = {}
     headers['destination'] = destinations.CMD_RES_DESTINATION
-    headers['ping-id'] = pingMsg['headers']['ping-id'] 
+    headers['ping-id'] = pingMsg['headers']['ping-id']
+    headers['timestamp'] = pingMsg['headers']['timestamp']
+    headers['from'] = self.subject.id
     self.frame.headers = headers
 
     return self.frame.pack()
