@@ -349,7 +349,7 @@ class Host(object):
   stompProtocol = inject.attr('stompProtocol')
 
   def __init__(self):
-    self._descriptor = EntityDescriptor('Host-ID')
+    self._descriptor = EntityDescriptor('VMController-Host')
     self._vms = {}
     self._pings = {}
  
