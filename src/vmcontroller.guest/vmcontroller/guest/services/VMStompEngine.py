@@ -8,11 +8,11 @@ try:
     from twisted.internet.task import LoopingCall
     
     from vmcontroller.common import EntityDescriptor
-    from vmcontroller import BaseStompEngine 
-    from vmcontroller import support, exceptions 
-    from vmcontroller import destinations
+    from vmcontroller.common import BaseStompEngine 
+    from vmcontroller.common import support, exceptions 
+    from vmcontroller.common import destinations
 except ImportError, e:
-    print "Import error: %s" % e
+    print "Import error in %s : %s" % (__name__, e)
     import sys
     sys.exit()
 
@@ -29,7 +29,7 @@ class VMStompEngine(BaseStompEngine):
   def __init__(self):
     super( VMStompEngine, self).__init__()
  
-    networkInterface = self.config.get('VM', 'network_interface')
+    networkInterface = self.config.get('guest', 'network_interface')
 
     networkInterfaceData = netifaces.ifaddresses(networkInterface)
     self._id, self._ip = [ networkInterfaceData[af][0]['addr'] for af in (netifaces.AF_LINK, netifaces.AF_INET) ]

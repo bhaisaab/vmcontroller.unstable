@@ -10,7 +10,7 @@ try:
     import inspect 
     import fnmatch
 except ImportError, e:
-    print "Import Error: ", e
+    print "Import error in %s : %s" % (__name__, e)
     import sys
     sys.exit()
 
