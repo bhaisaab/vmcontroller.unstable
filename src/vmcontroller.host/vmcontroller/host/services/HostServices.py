@@ -48,7 +48,7 @@ class VMRegistry(object):
     name = self.getNameForId( vmDescriptor.id )
     vmDescriptor.name = name
     self._vms[vmDescriptor.id] = vmDescriptor
-    self.logger.info("VM '%s' has joined the party" % self._vms[vmDescriptor.id].name )
+    self.logger.info("VM '%s has joined the party" % self._vms[vmDescriptor.id].name )
 
   def removeVM(self, vmId): 
     """ Removes a VM from the party """
@@ -251,8 +251,8 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     cmdId = self._host.sendCmdRequest(toVmName, cmd, args, env, path, fileForStdin)
     return cmdId
 
-  def xmlrpc_ping(self, toVmName, timeout_secs=5.0): #FIXME: magic number of seconds
-    vmId = self.vmRegistry.getIdForName(toVmName)
+  def xmlrpc_ping(self, vmName, timeout_secs=5.0): #FIXME: magic number of seconds
+    vmId = self.vmRegistry.getIdForName(vmName)
     return self._host.ping(vmId,timeout_secs)
 
   def xmlrpc_listFinishedCmds(self):
@@ -335,7 +335,7 @@ def _getPrintableFunctionSignature(f):
 
 
 
-
+# TODO: Fix Host, add missing interfaces
 @inject.appscope
 class Host(object):
   logger = logging.getLogger( support.discoverCaller() )
@@ -357,17 +357,17 @@ class Host(object):
   def descriptor(self):
     return self._descriptor
 
-  def ping(self, toVmName, timeout_secs):
+  def ping(self, vmId, timeout_secs):
     def _timeout(timestamp):
       d = self._pings.pop(timestamp, None)
       if d:
-        name = self._getNameForId(toVmName)
+        name = self.vmRegistry.getNameForId(vmId)
         d.errback(RuntimeError('PING timeout (for %s)' % name))
 
     timestamp = str(time.time())
     d = defer.Deferred()
     self._pings[timestamp] = d
-    self.stompProtocol.sendMsg( self.words['PING']().howToSay(self.vmRegistry.getIdForName(toVmName)) )
+    self.stompProtocol.sendMsg( self.words['PING']().howToSay( vmId ) )
     reactor.callLater(timeout_secs, _timeout, timestamp) 
     return d
 

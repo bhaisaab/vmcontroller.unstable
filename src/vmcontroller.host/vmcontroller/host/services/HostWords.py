@@ -16,8 +16,8 @@ def getWords():
 
 class PING(BaseWord):
   def howToSay(self, dst):
-    self.frame.headers['to'] = dst.id
-    self.frame.headers['destination'] = CMD_REQ_DESTINATION
+    self.frame.headers['to'] = dst
+    self.frame.headers['destination'] = destinations.CMD_REQ_DESTINATION
     self.frame.headers['ping-id'] = uuid.uuid1()
 
     return self.frame.pack()
