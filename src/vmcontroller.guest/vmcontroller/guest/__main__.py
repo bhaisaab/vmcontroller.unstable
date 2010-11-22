@@ -100,8 +100,8 @@ def main():
 
     application = service.Application("vmcontroller.guest")
 
-    myservice = start()
-    myservice.setServiceParent(application)
+    guest_service = start()
+    guest_service.setServiceParent(application)
 
 if __name__ == '__main__':
     try:
@@ -112,14 +112,7 @@ if __name__ == '__main__':
         logger().error("Server terminated due to error: %s" % e)
         logger().exception(e)
 
-
-#TODO: Fix and port old code
-
-
-
-
-
-
+#TODO: Implement scp & ssh server using twisted.conch for file transfer, get rid of chirp
 
 class ChirpServerProcessProtocol(protocol.ProcessProtocol):
 
@@ -179,15 +172,4 @@ def spawnChirpServerProcess(config):
   processProtocol = ChirpServerProcessProtocol(aclFileName)
   newProc = lambda: reactor.spawnProcess( processProtocol, cmdWithPath, args=cmdWithArgs, env=None )
   reactor.callWhenRunning(newProc) 
-
-#if __name__ == '__main__':
-#  from sys import argv
-#  if len(argv) < 2:
-#    print "Usage: %s <config-file>" % argv[0]
-#    exit(-1)
-#  else:
-#    configFile = argv[1]
-#
-#    config = SafeConfigParser()
-#    config.read(configFile)
 

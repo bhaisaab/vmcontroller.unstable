@@ -208,7 +208,7 @@ def _success(results):
 class HostXMLRPCService(xmlrpc.XMLRPC, object):
 
   logger = logging.getLogger( support.discoverCaller() )
-  
+  vmRegistry = inject.attr('vmRegistry', VMRegistry)
   @inject.param('config')
   @inject.param('hvController')
   @inject.param('subject')
@@ -251,7 +251,7 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     return cmdId
 
   def xmlrpc_ping(self, toVmName, timeout_secs=5.0): #FIXME: magic number of seconds
-    vmId = self._getIdForName(toVmName)
+    vmId = vmRegistry._getIdForName(toVmName)
     return self._host.ping(vmId,timeout_secs)
 
   def xmlrpc_listFinishedCmds(self):
