@@ -20,7 +20,8 @@ try:
     from vmcontroller.common import StompProtocolFactory, StompProtocol
     from vmcontroller.host.config import init_config, init_config_file, debug_config
     from vmcontroller.host.controller import HyperVisorController
-    from vmcontroller.host.services import HostStompEngine, HostWords, HostServices
+    from vmcontroller.host.services import HostStompEngine, HostWords
+    from vmcontroller.host.services.HostServices import Host, HostXMLRPCService
 except ImportError, e:
     print "Import Error: %s" % e
     import sys
@@ -70,7 +71,7 @@ def init():
     injector.bind('stompEngine', to=HostStompEngine, scope=inject.appscope)
     injector.bind('words', to=HostWords.getWords) 
     injector.bind('stompProtocol', to=StompProtocol, scope=inject.appscope)
-    injector.bind('subject', to=HostServices) 
+    injector.bind('subject', to=Host) 
     injector.bind('hvController', to=HyperVisorController)
 
     init_config_file(options.configfile)
@@ -193,7 +194,7 @@ def start(config):
 
     stompProtocolFactory = StompProtocolFactory()
 
-    xmlrpcService = HostServices.HostXMLRPCService()
+    xmlrpcService = HostXMLRPCService()
     xmlrpcService.makeEngineAccesible()
 
     host = config.get('broker', 'host') 

@@ -70,7 +70,7 @@ class VMRegistry(object):
     if not name:
       self.logger.error("Unable to match VM ID '%s' to any registered VM (is \
           the VM controller really running from within a VM?)", str(vmId))
-      raise Exceptions.NoSuchVirtualMachine(str(vmId))
+      raise exceptions.NoSuchVirtualMachine(str(vmId))
     else:
       return name
 
@@ -79,7 +79,7 @@ class VMRegistry(object):
     if not id_:
       self.logger.error("Unable to match VM name '%s' to any registered VM (is \
           the VM controller really running from within a VM?)", vmName)
-      raise Exceptions.NoSuchVirtualMachine(vmName)
+      raise exceptions.NoSuchVirtualMachine(vmName)
     else:
       return id_ 
 
@@ -208,7 +208,8 @@ def _success(results):
 class HostXMLRPCService(xmlrpc.XMLRPC, object):
 
   logger = logging.getLogger( support.discoverCaller() )
-  vmRegistry = inject.attr('vmRegistry', VMRegistry)
+  vmRegistry = inject.attr('VMRegistry', VMRegistry)
+
   @inject.param('config')
   @inject.param('hvController')
   @inject.param('subject')
@@ -219,7 +220,7 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     self._hvController = hvController
     self._createHVControllerMethods()
 
-    self._host = subject 
+    self._host = subject
 
   #from xmlrpc.XMLRPC
   def _getFunction(self, functionPath):
@@ -251,7 +252,7 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     return cmdId
 
   def xmlrpc_ping(self, toVmName, timeout_secs=5.0): #FIXME: magic number of seconds
-    vmId = vmRegistry._getIdForName(toVmName)
+    vmId = self.vmRegistry.getIdForName(toVmName)
     return self._host.ping(vmId,timeout_secs)
 
   def xmlrpc_listFinishedCmds(self):
@@ -349,12 +350,35 @@ class Host(object):
 
   def __init__(self):
     self._descriptor = EntityDescriptor('Host-ID')
+    self._vms = {}
+    self._pings = {}
  
   @property
   def descriptor(self):
     return self._descriptor
 
-  
+  def ping(self, toVmName, timeout_secs):
+    def _timeout(timestamp):
+      d = self._pings.pop(timestamp, None)
+      if d:
+        name = self._getNameForId(toVmName)
+        d.errback(RuntimeError('PING timeout (for %s)' % name))
+
+    timestamp = str(time.time())
+    d = defer.Deferred()
+    self._pings[timestamp] = d
+    self.stompProtocol.sendMsg( self.words['PING']().howToSay(self.vmRegistry.getIdForName(toVmName)) )
+    reactor.callLater(timeout_secs, _timeout, timestamp) 
+    return d
+
+  def processPong(self, msg):
+    timestamp = msg['headers']['timestamp']
+    d = self._pings.pop(timestamp, None)
+    assert d
+    vmId = msg['headers']['from']
+    vmName = self._getNameForId(vmId)
+    d.callback('PONG from %s' % vmName)
+
   def sendCmdRequest(self, toVmName, cmd, args=(), env={}, path=None, fileForStdin=''):
     #get id for name
     toVmId = self.vmRegistry.getIdForName(toVmName)
