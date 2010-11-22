@@ -8,6 +8,7 @@ echo "Bootstrapping zc.buildout..."
 
 if [ ! -f $BUILDOUT_FILE ]; then
   mkdir -p bin
+  mkdir -p downloads
   python $BOOTSTRAP_FILE -v 1.5.0 -d
   if [ ! -f $BUILDOUT_FILE ]; then
     echo "Oops, something went wrong...";
