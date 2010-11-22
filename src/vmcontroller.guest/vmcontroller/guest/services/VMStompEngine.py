@@ -54,6 +54,7 @@ class VMStompEngine(BaseStompEngine):
     return tuple(res)
 
   def pong(self, pingMsg):
+    self.logger.debug("Sending reply to received ping: ", pingMsg )
     self.stompProtocol.sendMsg( self.words['PONG']().howToSay(pingMsg) )
 
   def dealWithExecutionResults(self, results):

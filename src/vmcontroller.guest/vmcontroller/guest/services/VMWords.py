@@ -20,13 +20,14 @@ def getWords():
 
 class PING(BaseWord):
   def listenAndAct(self, msg):
+    headers = msg['headers']
     if fnmatch.fnmatch(self.subject.descriptor.id, headers['to']): 
-      self.subject.pong(self)
+      self.subject.pong(msg)
 
 class PONG(BaseWord):
   def howToSay(self, pingMsg):
     headers = {}
-    headers['destination'] = destination.CMD_RES_DESTINATION
+    headers['destination'] = destinations.CMD_RES_DESTINATION
     headers['ping-id'] = pingMsg['headers']['ping-id'] 
     self.frame.headers = headers
 
