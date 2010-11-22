@@ -376,7 +376,7 @@ class Host(object):
     d = self._pings.pop(timestamp, None)
     assert d
     vmId = msg['headers']['from']
-    vmName = self._getNameForId(vmId)
+    vmName = self.vmRegistry.getNameForId(vmId)
     d.callback('PONG from %s' % vmName)
 
   def sendCmdRequest(self, toVmName, cmd, args=(), env={}, path=None, fileForStdin=''):
