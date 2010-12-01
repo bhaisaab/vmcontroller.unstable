@@ -269,15 +269,14 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     vmId = self._getIdForName(vmName)
     return self._host.cpFileFromVM(vmId, pathToRemoteFileName, pathToLocalFileName )
 
-
   ################################################
   ## Hypervisor controller dependent operations ##
   ################################################
+
   def _inspectHVControllerMethods(self):
     allMethods = inspect.getmembers(self._hvController, inspect.isfunction)
     publicMethods = filter( lambda method: method[0][0] != '_', allMethods )
     return publicMethods
-
 
   def _addMethod(self, method):
     name = 'xmlrpc_' + method.func_name
