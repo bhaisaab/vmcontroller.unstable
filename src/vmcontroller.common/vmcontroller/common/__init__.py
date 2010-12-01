@@ -1,5 +1,5 @@
 """
-VMController, a general purpose virtual machine controller written in Python.
+VMController Common, common module between vmcontroller.host and vmcontroller.guest
 """
 
 __version__ = '0.1.0'

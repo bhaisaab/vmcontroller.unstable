@@ -1,5 +1,5 @@
 """
-Guest Package
+VMController Guest, agent for guest system
 """
 
 __version__ = '0.1.0'

@@ -1,5 +1,5 @@
 """
-VMController, a general purpose virtual machine controller written in Python.
+VMController Host, agent for host system
 """
 
 __version__ = '0.1.0'
