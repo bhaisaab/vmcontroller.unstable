@@ -243,17 +243,14 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
   ###########################
   ## Operation on the VMs  ##
   ###########################
-  def xmlrpc_listRegisteredVMs(self):
-    registeredVMIds = self._host.getRegisteredVMs()
-    return map( self._getNameForId, registeredVMIds )
-
-  def xmlrpc_runCmd(self, toVmName, cmd, args=(), env={}, path=None, fileForStdin=''):
-    cmdId = self._host.sendCmdRequest(toVmName, cmd, args, env, path, fileForStdin)
-    return cmdId
 
   def xmlrpc_ping(self, vmName, timeout_secs=5.0): #FIXME: magic number of seconds
     vmId = self.vmRegistry.getIdForName(vmName)
     return self._host.ping(vmId,timeout_secs)
+
+  def xmlrpc_runCmd(self, toVmName, cmd, args=(), env={}, path=None, fileForStdin=''):
+    cmdId = self._host.sendCmdRequest(toVmName, cmd, args, env, path, fileForStdin)
+    return cmdId
 
   def xmlrpc_listFinishedCmds(self):
     return self._host.listFinishedCmds()
