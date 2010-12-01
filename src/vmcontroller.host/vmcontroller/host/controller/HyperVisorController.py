@@ -171,9 +171,13 @@ def deleteSnapshot(vm, name):
     """
     return defer.maybeDeferred( getController().deleteSnapshot, vm, name )
 
-def listAvailableVMs():
-  """listAvailableVMs()"""
-  return defer.maybeDeferred( getController().listAvailableVMs )
+def listVMs():
+  """listVMs()"""
+  return defer.maybeDeferred( getController().listVMs )
+
+def listVMsWithState():
+  """listVMsWithState()"""
+  return defer.maybeDeferred( getController().listVMsWithState )
 
 def listRunningVMs():
   """listRunningVMs()"""

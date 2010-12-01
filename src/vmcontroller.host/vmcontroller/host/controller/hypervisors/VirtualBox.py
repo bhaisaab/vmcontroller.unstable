@@ -252,7 +252,7 @@ def deleteSnapshot(vm, name):
     d = threads.deferToThread( impl )
     return d
 
-def listAvailableVMs():
+def listVMs():
   def impl():
     vbox = _ctx['vbox']
     ms = _getMachines()
@@ -396,9 +396,7 @@ def _getSessionForVM(vm):
     vbox.openExistingSession(session, m.id)
   except:
     vbox.openSession(session, m.id)
-  return session 
-
-
+  return session
 
 def _getMACToNameMapping():
   vbox = _ctx['vbox']
