@@ -156,13 +156,13 @@ def shutdown(vm):
     d = threads.deferToThread( impl )
     return d
 
-#def sleep(vm):
-#    def impl():
-#        return _execProgressCmd(vm, 'sleep', None)
-#
-#    logger.debug("Controller method %s invoked" % support.discoverCaller() )
-#    d = threads.deferToThread( impl )
-#    return d
+def sleep(vm):
+    def impl():
+        return _execProgressCmd(vm, 'sleep', None)
+
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
 #FIXME: ugly absurd bla bla fix
 def reset(vm):
@@ -467,7 +467,7 @@ def _execProgressCmd(vm,cmd,args):
     ops={
          'start':           lambda: console.powerUp(),
          'shutdown':        lambda: console.powerButton(),
-         #'sleep':           lambda: console.sleepButton(),
+         'sleep':           lambda: console.sleepButton(),
          'reset':           lambda: console.reset(),
          'powerOff':        lambda: console.powerDown(),
          'pause':           lambda: console.pause(),

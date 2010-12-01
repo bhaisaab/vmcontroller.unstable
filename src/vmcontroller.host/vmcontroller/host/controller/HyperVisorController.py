@@ -89,12 +89,12 @@ def shutdown(vm):
     """
     return defer.maybeDeferred( getController().shutdown, vm )
 
-#def sleep(vm):
-#    """
-#    Sends ACPI sleep signal to virtual machine.
-#    @param vm: Virtual machine's name.
-#    """
-#    return defer.maybeDeferred( getController().sleep, vm )
+def sleep(vm):
+    """
+    Sends ACPI sleep signal to virtual machine.
+    @param vm: Virtual machine's name.
+    """
+    return defer.maybeDeferred( getController().sleep, vm )
 
 def reset(vm):
     """
@@ -172,16 +172,16 @@ def deleteSnapshot(vm, name):
     return defer.maybeDeferred( getController().deleteSnapshot, vm, name )
 
 def listVMs():
-  """listVMs()"""
-  return defer.maybeDeferred( getController().listVMs )
+    """listVMs()"""
+    return defer.maybeDeferred( getController().listVMs )
 
 def listVMsWithState():
-  """listVMsWithState()"""
-  return defer.maybeDeferred( getController().listVMsWithState )
+    """listVMsWithState()"""
+    return defer.maybeDeferred( getController().listVMsWithState )
 
 def listRunningVMs():
-  """listRunningVMs()"""
-  return defer.maybeDeferred( getController().listRunningVMs )
+    """listRunningVMs()"""
+    return defer.maybeDeferred( getController().listRunningVMs )
 
 def getNamesToIdsMapping():
     """getNamesToIdsMapping"""
