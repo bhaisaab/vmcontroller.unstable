@@ -17,4 +17,4 @@ class TestHostConfig(unittest.TestCase):
         self.assertEquals( self.config.get("xmlrpc", "host"), "127.0.0.1")
         self.assertEquals( int(self.config.get("xmlrpc", "port")), 50505)
         self.assertEquals( self.config.get("broker", "host"), "0.0.0.0")
-        self.assertEquals( self.config.get("hypervisor", "name"), "virtualbox")
+        self.assertEquals( self.config.get("hypervisor", "name"), "VirtualBox")
