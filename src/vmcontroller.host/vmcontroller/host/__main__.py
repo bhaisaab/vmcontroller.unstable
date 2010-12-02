@@ -167,14 +167,21 @@ def init_morbid(config):
     try:
         import morbid
     except ImportError, e:
+        import sys
         print "Import error: %s\nPlease check." % e
-        exit()
+        sys.exit()
 
     morbid_factory = morbid.StompFactory(verbose=True)
     broker_host = config.get('broker', 'host')
     broker_port = int(config.get('broker', 'port'))
+    try:
+        reactor.listenTCP(broker_port, morbid_factory, interface=broker_host)
+    except:
+        logger.fatal("Unable to start Morbid, port may not be free. Exiting.")
+        import sys
+        sys.exit()
+
     logger.info("Starting MorbidQ broker %s:%s", broker_host, broker_port)
-    reactor.listenTCP(broker_port, morbid_factory, interface=broker_host)
 
 @inject.param('config')
 def start(config):

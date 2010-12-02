@@ -237,8 +237,14 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     siteRoot.putChild('RPC2', self)
     port = int(self._config.get('xmlrpc', 'port'))
     listen_on = self._config.get('xmlrpc', 'host')
-    reactor.listenTCP(port, server.Site(siteRoot), interface=listen_on) 
-  
+    try:
+        reactor.listenTCP(port, server.Site(siteRoot), interface=listen_on) 
+    except:
+        self.logger.fatal("Unable to start XMLRPC interface, perhaps port in use. Exiting...")
+        import sys
+        sys.exit()
+
+    self.logger.info("Listening on XMLRPC interface.")
   
   ###########################
   ## Operation on the VMs  ##
