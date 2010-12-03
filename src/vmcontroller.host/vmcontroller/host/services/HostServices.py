@@ -15,8 +15,9 @@ try:
     from twisted.web import xmlrpc, server, resource
 
     from vmcontroller.common import support, exceptions
-    from vmcontroller.host.controller import HyperVisorController
     from vmcontroller.common import EntityDescriptor
+    from vmcontroller.host.controller import HyperVisorController
+    from vmcontroller.host.services.FileTransfer import FileTransfer
 except ImportError, e:
     print "Import Error: %s" % e
     import sys
@@ -157,6 +158,15 @@ class FileTxs(object):
   def __init__(self):
     pass
 
+  def _display_response(self, lines = None):
+      """ Displays a server response. """
+      
+      if lines:
+          for line in lines:
+              print '%s' % (line)
+
+      self.factory.deferred = defer.Deferred()
+
   def cpFileToVM(self, vmId, pathToLocalFileName, pathToRemoteFileName = None ):
     """
     @param pathToRemoteFileName where to store the file, relative to the root of the server.
@@ -164,20 +174,25 @@ class FileTxs(object):
     """
     #this returns a deferred whose callbacks take care of returning the result
     if not self.vmRegistry.isValid(vmId):
-      msg = "Invalid VM Id: '%s'" % vmId 
-      self.logger.error(msg)
-      dres = defer.fail(msg)
+        msg = "Invalid VM Id: '%s'" % vmId 
+        self.logger.error(msg)
+        dres = defer.fail(msg)
     else:
-      vmIp = self.vmRegistry[vmId].ip 
-      if not pathToRemoteFileName:
-        pathToRemoteFileName = basename(pathToLocalFileName)
-      #chirp_put [options] <local-file> <hostname[:port]> <remote-file>
-      args = ('-t 10', pathToLocalFileName, vmIp, pathToRemoteFileName) #FIXME: magic numbers
-      chirp_cmd = join( self._chirpPath, 'chirp_put')
-      dres = utils.getProcessOutputAndValue(chirp_cmd, args)
+        # FIXME get IP from the other interface "host-only-adapter"
+        #vmIp = self.vmRegistry[vmId].ip 
+        if not pathToRemoteFileName:
+          pathToRemoteFileName = pathToLocalFileName
+        vmIp = "192.168.56.101"
+        # FIXME Get these stuff automatically
+        fileDirPath = '/home/rohit/temp'
+        fileServerPort = 1234
 
-    return dres
-    
+        self.logger.debug("Transferring file: %s to VM(%s)" % (pathToLocalFileName, vmIp))
+
+        fileUtil = FileTransfer(vmIp, fileServerPort, fileDirPath)
+        reactor.callLater(5, fileUtil.sendFile, pathToLocalFileName, pathToRemoteFileName)
+
+    return
 
   def cpFileFromVM(self, vmId, pathToRemoteFileName, pathToLocalFileName = None):
     #this returns a deferred whose callbacks take care of returning the result
@@ -194,9 +209,6 @@ class FileTxs(object):
       chirp_cmd = join( self._chirpPath, 'chirp_get')
       dres = utils.getProcessOutputAndValue(chirp_cmd, args)
     return dres
-
-
-
 
 
 def _fail(failure):
@@ -268,11 +280,11 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     return self._host.getCmdDetails(cmdId)
 
   def xmlrpc_cpFileToVM(self, vmName, pathToLocalFileName, pathToRemoteFileName = None ):
-    vmId = self._getIdForName(vmName)
+    vmId = self.vmRegistry.getIdForName(vmName)
     return self._host.cpFileToVM(vmId, pathToLocalFileName, pathToRemoteFileName )
 
   def xmlrpc_cpFileFromVM(self, vmName, pathToRemoteFileName, pathToLocalFileName = None):
-    vmId = self._getIdForName(vmName)
+    vmId = self.vmRegistry.getIdForName(vmName)
     return self._host.cpFileFromVM(vmId, pathToRemoteFileName, pathToLocalFileName )
 
   ################################################
