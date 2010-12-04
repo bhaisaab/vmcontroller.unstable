@@ -51,9 +51,10 @@ class CMD_RUN(BaseWord):
       cmdId = headers.get('cmd-id')
 
       cmdExecuter = CommandExecuter.CommandExecuter(cmdId, params)
-      cmdExecuter.executeCommand().addCallback( cmdExecuter.getExecutionResults )
-                                  .addErrback( cmdExecuter.errorHandler )
-                                  .addCallback( self.subject.dealWithExecutionResults )
+      cmdExecuter.executeCommand(
+                ).addCallback( cmdExecuter.getExecutionResults
+                ).addErrback( cmdExecuter.errorHandler
+                ).addCallback( self.subject.dealWithExecutionResults )
 
 class CMD_RESULT(BaseWord):
   def howToSay(self, results):
