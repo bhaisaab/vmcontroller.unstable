@@ -94,6 +94,7 @@ def start(config):
     # Start File Server
     try:
       	reactor.listenTCP(fileServerPort, FileServerFactory(fileServerDirectory))
+        logger.info('Listening on port %d, serving files from directory: %s' % (fileServerPort, fileServerDirectory))
     except:
         logger.fatal("Unable to start file server at port: %d, please check." % fileServerPort)
 

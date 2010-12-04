@@ -176,7 +176,6 @@ class FileServerFactory(protocol.ServerFactory):
 if __name__ == '__main__':
     port = 1234
     path = "/tmp"
-    display_message('Listening on port %d, serving files from directory: %s' % (port, path))
 
     reactor.listenTCP(port, FileServerFactory(path))
     reactor.run()
