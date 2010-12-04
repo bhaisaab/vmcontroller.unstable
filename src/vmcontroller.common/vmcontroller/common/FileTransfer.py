@@ -1,3 +1,6 @@
+"""
+Common file transfer utilities
+"""
 import hashlib
 from datetime import datetime
 
@@ -5,8 +8,6 @@ COMMANDS = {
             'list': ('list', 'Displays a list of all the available files'),
             'get': ('get <remote filename>', 'Downloads a file with a given filename'),
             'put': ('put <local file path> <remote file name>', 'Uploads a file with a given filename'),
-            'help': ('help', 'Displays a list of all the available commands'),
-            'quit': ('quit', 'Disconnects from the server'),
 }
 
 def timestamp():
@@ -51,6 +52,6 @@ def clean_and_split_input(input):
     """ Removes carriage return and line feed characters and splits input on a single whitespace. """
     
     input = input.strip()
-    input = input.split(' ')
-        
+    input = input.split(' ')    
     return input
+
