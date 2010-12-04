@@ -156,15 +156,6 @@ class FileTxs(object):
     def __init__(self):
         pass
 
-    def _display_response(self, lines = None):
-        """ Displays a server response. """
-        
-        if lines:
-            for line in lines:
-                print '%s' % (line)
-
-        self.factory.deferred = defer.Deferred()
-
     def cpFileToVM(self, vmId, pathToLocalFileName, pathToRemoteFileName = None ):
       """
       @param pathToRemoteFileName where to store the file, relative to the root of the server.
@@ -180,18 +171,20 @@ class FileTxs(object):
               pathToRemoteFileName = pathToLocalFileName
 
           # FIXME get IP from the other interface "host-only-adapter"
-          vmIp = self.vmRegistry[vmId].ip 
-          #vmIp = "192.168.56.101"
+          #vmIp = self.vmRegistry[vmId].ip 
+          vmIp = "192.168.56.101"
 
           # TODO: Get these stuff automatically, from config...
           fileDirPath = '/home/rohit/temp'
           fileServerPort = 1234
 
           fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
-          reactor.callLater(5, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName)
+          # FIXME: Ugly hack to call putfile after 6 secs
+          dres = defer.Deferred()
+          reactor.callLater(6, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName, dres)
           self.logger.debug("Transferring file: %s to VM(%s)" % (pathToLocalFileName, vmIp))
 
-      return
+      return dres
 
     def cpFileFromVM(self, vmId, pathToRemoteFileName, pathToLocalFileName = None):
         #this returns a deferred whose callbacks take care of returning the result
@@ -200,10 +193,19 @@ class FileTxs(object):
             self.logger.error(msg)
             dres = defer.fail(msg)
         else:
-            vmIp = self._vms[vmId].ip
-            if not pathToLocalFileName:
-                pathToLocalFileName = pathToRemoteFileName
+            # FIXME get IP from the other interface "host-only-adapter"
+            #vmIp = self.vmRegistry[vmId].ip 
+            vmIp = "192.168.56.101"
+
+            # TODO: Get these stuff automatically, from config...
+            fileDirPath = '/home/rohit/temp'
+            fileServerPort = 1234
+
+            fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
+            # FIXME: Ugly hack to call putfile after 6 secs
             dres = defer.Deferred()
+            reactor.callLater(1, fileUtil.getFile, pathToRemoteFileName, dres)
+            self.logger.debug("Requesting file: %s from VM(%s)" % (pathToRemoteFileName, vmIp))
         return dres
 
 def _fail(failure):
@@ -421,10 +423,10 @@ class Host(object):
     ################################
 
     def cpFileToVM(self, vmId, pathToLocalFileName, pathToRemoteFileName = None ):
-        self.fileTxs.cpFileToVM(vmId, pathToLocalFileName, pathToRemoteFileName)
+        return self.fileTxs.cpFileToVM(vmId, pathToLocalFileName, pathToRemoteFileName)
 
     def cpFileFromVM(self, vmId, pathToRemoteFileName, pathToLocalFileName = None):
-        self.fileTxs.cpFileFromVM(vmId, pathToRemoteFileName, pathToLocalFileName)
+        return self.fileTxs.cpFileFromVM(vmId, pathToRemoteFileName, pathToLocalFileName)
 
       
 

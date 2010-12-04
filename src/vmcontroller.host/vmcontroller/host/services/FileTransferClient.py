@@ -20,7 +20,8 @@ class FileTransferClient(basic.LineReceiver):
         self.server_ip = server_ip
         self.server_port = server_port
         self.files_path = files_path
-        self.logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__name__))  
+        self._transfers = {}
+        self.logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__name__))
 
         self.factory = FileTransferClientFactory(self.files_path)
         self.connection = reactor.connectTCP(self.server_ip, self.server_port, self.factory)
@@ -30,13 +31,15 @@ class FileTransferClient(basic.LineReceiver):
         self.connection.transport.write('list\n')
         self.factory.deferred.addCallback(self._display_response)
 
-    def getFile(self, fileName):
+    def getFile(self, fileName, dres):
         self.connection.transport.write('get %s\n' % fileName)
         self.factory.deferred.addCallback(self._display_response)
+        dres.callback('Request sent')
 
-    def putFile(self, filePath, fileName):
+    def putFile(self, filePath, fileName, dres):
         if not os.path.isfile(filePath):
             self.logger.debug('This file does not exist: ', filePath)
+            dres.callback('ERROR Transferring file: ', filePath)
             return
 
         fileSize = os.path.getsize(filePath) / 1024
@@ -49,6 +52,7 @@ class FileTransferClient(basic.LineReceiver):
         
         self.connection.transport.write('\r\n')
         self.factory.deferred.addCallback(self._display_response)
+        dres.callback('Transfer OK')
 
     def _sendCommand(self, line):
         """ Sends a command to the server. """
@@ -86,15 +90,14 @@ class FileTransferClient(basic.LineReceiver):
             self.connection.transport.write('%s %s\n' % (command, data[1]))
 
         self.factory.deferred.addCallback(self._display_response)
-        
+
     def _display_response(self, lines = None):
         """ Displays a server response. """
-        if lines!= None:
-            self.logger.debug("Received lines:\n", lines)
+        self.logger.debug("Server says:")
+        if lines:
+            for line in lines:
+                print '%s' % (line)
 
-        #FIXME ugly hack
-        self.transport.write('> ')
-        self.connection.transport.write('list\n')
         self.factory.deferred = defer.Deferred()
 
 class FileTransferProtocol(basic.LineReceiver):
