@@ -32,6 +32,7 @@ class VMStompEngine(BaseStompEngine):
     networkInterface = self.config.get('guest', 'network_interface')
 
     networkInterfaceData = netifaces.ifaddresses(networkInterface)
+    #FIXME Get IPs of all interfaces, especially the host-only adapter...
     self._id, self._ip = [ networkInterfaceData[af][0]['addr'] for af in (netifaces.AF_LINK, netifaces.AF_INET) ]
     self._id = self._id.upper()
     self.logger.debug("VM instantiated with id/ip %s/%s" % (self._id, self._ip) )
