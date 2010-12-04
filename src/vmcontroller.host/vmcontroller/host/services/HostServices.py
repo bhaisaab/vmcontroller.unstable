@@ -17,7 +17,7 @@ try:
     from vmcontroller.common import support, exceptions
     from vmcontroller.common import EntityDescriptor
     from vmcontroller.host.controller import HyperVisorController
-    from vmcontroller.host.services.FileTransfer import FileTransfer
+    from vmcontroller.host.services.FileTransferClient import FileTransferClient
 except ImportError, e:
     print "Import error in %s : %s" % (__name__, e)
     import sys
@@ -187,7 +187,7 @@ class FileTxs(object):
           fileDirPath = '/home/rohit/temp'
           fileServerPort = 1234
 
-          fileUtil = FileTransfer(vmIp, fileServerPort, fileDirPath)
+          fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
           reactor.callLater(5, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName)
           self.logger.debug("Transferring file: %s to VM(%s)" % (pathToLocalFileName, vmIp))
 

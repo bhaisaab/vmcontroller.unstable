@@ -13,7 +13,7 @@ except ImportError, e:
     sys.exit()
 
 #FIXME: The Ugly Code
-class FileTransfer(basic.LineReceiver):
+class FileTransferClient(basic.LineReceiver):
     delimiter = '\n'
     
     def __init__(self, server_ip, server_port, files_path):
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     fileDirPath = '/tmp'
     fileServerPort = 1234
 
-    fileUtil = FileTransfer(vmIp, fileServerPort, fileDirPath)
+    fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
 
     pathToLocalFileName = '/bin/uname'
     pathToRemoteFileName = 'uname-bin'
