@@ -19,7 +19,8 @@ try:
     from vmcontroller.common import support, exceptions
     from vmcontroller.common import StompProtocolFactory, StompProtocol
     from vmcontroller.guest.config import init_config, init_config_file, debug_config
-    from vmcontroller.guest.services import VMStompEngine, VMWords, FileServerFactory
+    from vmcontroller.guest.services import VMStompEngine, VMWords
+    from vmcontroller.guest.services.FileServer import FileServerFactory
 except ImportError, e:
     print "Import error in %s : %s" % (__name__, e)
     import sys
