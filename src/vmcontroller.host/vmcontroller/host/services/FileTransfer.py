@@ -1,6 +1,5 @@
 try:
     import os
-    import optparse
     import logging
 
     from twisted.internet import reactor, protocol, stdio, defer
