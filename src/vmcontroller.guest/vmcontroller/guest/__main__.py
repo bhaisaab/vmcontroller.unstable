@@ -19,7 +19,7 @@ try:
     from vmcontroller.common import support, exceptions
     from vmcontroller.common import StompProtocolFactory, StompProtocol
     from vmcontroller.guest.config import init_config, init_config_file, debug_config
-    from vmcontroller.guest.services import VMStompEngine, VMWords
+    from vmcontroller.guest.services import VMStompEngine, VMWords, FileServerFactory
 except ImportError, e:
     print "Import error in %s : %s" % (__name__, e)
     import sys
@@ -83,12 +83,20 @@ def start(config):
 
     host = config.get('broker', 'host') 
     port = int(config.get('broker', 'port'))
+
     username = config.get('broker', 'username')
     password = config.get('broker', 'password')
 
-    stompProtocolFactory = StompProtocolFactory()
+    fileServerPort      = config.get('fileserver', 'port')
+    fileServerDirectory = config.get('fileserver', 'directory')
 
-    #spawnChirpServerProcess(config)
+    # Start File Server
+    try:
+      	reactor.listenTCP(fileServerPort, FileServerFactory(fileServerDirectory))
+    except:
+        logger.fatal("Unable to start file server at port: %d, please check." % fileServerPort)
+
+    stompProtocolFactory = StompProtocolFactory()
 
     reactor.connectTCP(host, port, stompProtocolFactory)
     reactor.run()
@@ -112,64 +120,4 @@ if __name__ == '__main__':
         logger().error("Server terminated due to error: %s" % e)
         logger().exception(e)
 
-#TODO: Implement scp & ssh server using twisted.conch for file transfer, get rid of chirp
-
-class ChirpServerProcessProtocol(protocol.ProcessProtocol):
-
-  logger = logging.getLogger( support.discoverCaller() )
-
-  def __init__(self, aclFileName):
-    self._aclFileName = aclFileName
-
-  def connectionMade(self):
-    self.transport.closeStdin()
-    self.logger.debug("Process started!")
-
-  def outReceived(self, data):
-    self.logger.debug("Chirp Server stdout: %s" % data)
-  def errReceived(self, data):
-    self.logger.debug("Chirp Server stderr: %s" % data)
-
-  def inConnectionLost(self):
-    pass #we don't care about stdin. We do in fact close it ourselves
-
-  def outConnectionLost(self):
-    self.logger.info("Chirp Server closed its stdout")
-  def errConnectionLost(self):
-    self.logger.info("Chirp Server closed its stderr")
-
-  def processExited(self, reason):
-    #This is called when the child process has been reaped 
-    os.remove(self._aclFileName)
-  def processEnded(self, reason):
-    #This is called when all the file descriptors associated with the child
-    #process have been closed and the process has been reaped
-    self.logger.warn("Process ended (code: %s) " % reason.value.exitCode)
-
-
-def createChirpACLFile(dirToServe):
-  f = file( os.path.join(dirToServe, '.__acl'), 'w' )
-  f.write('address:* rwl\n')
-  f.close()
-  return f.name
-
-def spawnChirpServerProcess(config):
-  """ Launches the webservices server.
-
-      The server's path is given by the configuration 
-      directive 'hypervisor_helpers_path' under the 'Host' section
-    
-      The callback method 'controllerInitializer' will be called
-      once the server has been started. 
-      
-  """
-  dirToServe = os.path.expanduser(config.get('VM', 'dir_to_serve'))
-  aclFileName = createChirpACLFile(dirToServe)
-  csCmd = 'chirp_server -E -U5s -u - -r %s' % (dirToServe, )
-  cmdWithArgs = csCmd.split()
-  cmd = cmdWithArgs[0]
-  cmdWithPath = cmd
-  processProtocol = ChirpServerProcessProtocol(aclFileName)
-  newProc = lambda: reactor.spawnProcess( processProtocol, cmdWithPath, args=cmdWithArgs, env=None )
-  reactor.callWhenRunning(newProc) 
-
+#TODO: Implement using twisted.conch, file transfer
