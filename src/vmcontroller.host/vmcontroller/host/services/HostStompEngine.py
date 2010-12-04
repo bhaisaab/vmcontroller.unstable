@@ -10,7 +10,7 @@ try:
     from vmcontroller.common import support, exceptions 
     from vmcontroller.common import destinations
 except ImportError, e:
-    print "Import Error: %s" % e
+    print "Import error in %s : %s" % (__name__, e)
     import sys
     sys.exit()
 

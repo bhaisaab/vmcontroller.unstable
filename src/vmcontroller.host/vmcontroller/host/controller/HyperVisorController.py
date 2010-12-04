@@ -16,7 +16,7 @@ try:
     from twisted.internet import defer
     from vmcontroller.common import support, exceptions
 except ImportError, e:
-    print "Import Error: %s" % e
+    print "Import error in %s : %s" % (__name__, e)
     import sys
     sys.exit()
 

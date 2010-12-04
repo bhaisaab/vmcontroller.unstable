@@ -9,9 +9,10 @@ try:
 
     from ConfigParser import SafeConfigParser
     from pkg_resources import resource_stream
-except ImportError as e:
-    print "Import Error: %s" % e
-    exit()
+except ImportError, e:
+    print "Import error in %s : %s" % (__name__, e)
+    import sys
+    sys.exit()
 
 logger = logging.getLogger(__name__)
 

@@ -23,7 +23,7 @@ try:
     from vmcontroller.host.services import HostStompEngine, HostWords
     from vmcontroller.host.services.HostServices import Host, HostXMLRPCService
 except ImportError, e:
-    print "Import Error: %s" % e
+    print "Import error in %s : %s" % (__name__, e)
     import sys
     sys.exit()
 

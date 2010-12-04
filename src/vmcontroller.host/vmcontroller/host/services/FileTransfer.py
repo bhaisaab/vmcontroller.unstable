@@ -1,46 +1,56 @@
-import os
-import optparse
-import logging
+try:
+    import os
+    import optparse
+    import logging
 
-from twisted.internet import reactor, protocol, stdio, defer
-from twisted.protocols import basic
-from twisted.internet.protocol import ClientFactory
+    from twisted.internet import reactor, protocol, stdio, defer
+    from twisted.protocols import basic
+    from twisted.internet.protocol import ClientFactory
 
-from vmcontroller.common.FileTransfer import COMMANDS, display_message, validate_file_md5_hash, get_file_md5_hash, read_bytes_from_file, clean_and_split_input
+    from vmcontroller.common.FileTransfer import *
+except ImportError, e:
+    print "Import error in %s : %s" % (__name__, e)
+    import sys
+    sys.exit()
 
+#FIXME: The Ugly Code
 class FileTransfer(basic.LineReceiver):
     delimiter = '\n'
     
     def __init__(self, server_ip, server_port, files_path):
-        self.isConnected = False;
         self.server_ip = server_ip
         self.server_port = server_port
         self.files_path = files_path
         self.logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__name__))  
+
         self.factory = FileTransferClientFactory(self.files_path)
         self.connection = reactor.connectTCP(self.server_ip, self.server_port, self.factory)
         self.factory.deferred.addCallback(self._display_response)
 
-    def sendFile(self, file_path, filename):
-        if not os.path.isfile(file_path):
-            self.logger.debug('This file does not exist')
+    def listFile(self):
+        self.connection.transport.write('list\n')
+        self.factory.deferred.addCallback(self._display_response)
+
+    def getFile(self, fileName):
+        self.connection.transport.write('get %s\n' % fileName)
+        self.factory.deferred.addCallback(self._display_response)
+
+    def putFile(self, filePath, fileName):
+        if not os.path.isfile(filePath):
+            self.logger.debug('This file does not exist: ', filePath)
             return
 
-        file_size = os.path.getsize(file_path) / 1024
-        
-        print 'Uploading file: %s->%s (%d KB)' % (file_path, filename, file_size)
-        
-        self.connection.transport.write('PUT %s %s\n' % (filename, get_file_md5_hash(file_path)))
+        fileSize = os.path.getsize(filePath) / 1024
+        self.connection.transport.write('PUT %s %s\n' % (fileName, get_file_md5_hash(filePath)))
         self.setRawMode()
-        
-        for bytes in read_bytes_from_file(file_path):
+        self.logger.info('Uploading file: %s->%s (%d KB)' % (filePath, fileName, fileSize))
+
+        for bytes in read_bytes_from_file(filePath):
             self.connection.transport.write(bytes)
         
         self.connection.transport.write('\r\n')
         self.factory.deferred.addCallback(self._display_response)
 
-
-        
     def _sendCommand(self, line):
         """ Sends a command to the server. """
         print "Command:", line
@@ -54,42 +64,25 @@ class FileTransfer(basic.LineReceiver):
             self.self.logger.debug('Invalid command')
             return
         
-        if command == 'list' or command == 'help' or command == 'quit':
-            self.connection.transport.write('%s\n' % (command))
+        if command == 'list':
+            return self.listFile()
         elif command == 'get':
             try:
-                filename = data[1]
+                fileName = data[1]
             except IndexError:
                 self.logger.debug('Missing filename')
                 return
             
-            self.connection.transport.write('%s %s\n' % (command, filename))
+            self.getFile(fileName)
         elif command == 'put':
             try:
-                file_path = data[1]
-                filename = data[2]
+                filePath = data[1]
+                fileName = data[2]
             except IndexError:
                 self.logger.debug('Missing local file path or remote file name')
                 return
-            
-            if not os.path.isfile(file_path):
-                self.logger.debug('This file does not exist')
-                return
 
-            file_size = os.path.getsize(file_path) / 1024
-            
-            print 'Uploading file: %s->%s (%d KB)' % (file_path, filename, file_size)
-            
-            self.connection.transport.write('PUT %s %s\n' % (filename, get_file_md5_hash(file_path)))
-            self.setRawMode()
-            
-            for bytes in read_bytes_from_file(file_path):
-                self.connection.transport.write(bytes)
-            
-            self.connection.transport.write('\r\n')   
-            
-            # When the transfer is finished, we go back to the line mode 
-            self.setLineMode()
+            self.getFile(filePath, fileName)
         else:
             self.connection.transport.write('%s %s\n' % (command, data[1]))
 
@@ -97,32 +90,31 @@ class FileTransfer(basic.LineReceiver):
         
     def _display_response(self, lines = None):
         """ Displays a server response. """
-        
-        if lines:
-            for line in lines:
-                print '%s' % (line)
+        if lines!= None:
+            self.logger.debug("Received lines:\n", lines)
+
+        #FIXME ugly hack
         self.transport.write('> ')
         self.connection.transport.write('list\n')
-        self.isConnected = True;
         self.factory.deferred = defer.Deferred()
-        
-   
 
 class FileTransferProtocol(basic.LineReceiver):
     delimiter = '\n'
+    def __init__(self):
+        self.logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__name__))  
 
     def connectionMade(self):
         self.buffer = []
         self.file_handler = None
         self.file_data = ()
-        
-        print 'Connected to the server'
+
+        self.logger.debug('Connected to the server')
         
     def connectionLost(self, reason):
         self.file_handler = None
         self.file_data = ()
         
-        print 'Connection to the server has been lost'
+        self.logger.debug('Connection to the server has been lost')
         #reactor.stop()
     
     def lineReceived(self, line):
@@ -145,7 +137,7 @@ class FileTransferProtocol(basic.LineReceiver):
         filename = self.file_data[0]
         file_path = os.path.join(self.factory.files_path, filename)
         
-        print 'Receiving file chunk (%d KB)' % (len(data))
+        self.logger.debug('Receiving file chunk (%d KB)' % (len(data)))
         
         if not self.file_handler:
             self.file_handler = open(file_path, 'wb')
@@ -160,10 +152,10 @@ class FileTransferProtocol(basic.LineReceiver):
             self.file_handler = None
             
             if validate_file_md5_hash(file_path, self.file_data[1]):
-                print 'File %s has been successfully transfered and saved' % (filename)
+                self.logger.debug('File %s has been successfully transfered and saved' % (filename))
             else:
                 os.unlink(file_path)
-                print 'File %s has been successfully transfered, but deleted due to invalid MD5 hash' % (filename)
+                self.logger.debug('File %s has been successfully transfered, but deleted due to invalid MD5 hash' % (filename))
         else:
             self.file_handler.write(data)
 
@@ -175,20 +167,18 @@ class FileTransferClientFactory(protocol.ClientFactory):
         self.deferred = defer.Deferred()
 
 if __name__ == '__main__':
-
-    vmIp = "192.168.56.101"
     # FIXME Get these stuff automatically
-    fileDirPath = '/home/rohit/temp'
+    vmIp = "192.168.56.101"
+    fileDirPath = '/tmp'
     fileServerPort = 1234
 
     fileUtil = FileTransfer(vmIp, fileServerPort, fileDirPath)
 
-    pathToLocalFileName = '/home/rohit/tetris.py'
-    pathToRemoteFileName = 'tetris.txt'
+    pathToLocalFileName = '/bin/uname'
+    pathToRemoteFileName = 'uname-bin'
     print "Transferring file: %s to VM(%s)" % (pathToLocalFileName, vmIp)
 
-    reactor.callLater(5, fileUtil.sendFile, pathToLocalFileName, pathToRemoteFileName)
-    #fileUtil.sendFile(pathToLocalFileName, pathToRemoteFileName)
+    reactor.callLater(5, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName)
 #    fileUtil.sendFile(pathToLocalFileName, pathToRemoteFileName)
 #    stdio.StandardIO(CommandLineProtocol(IP, PORT, LOCALPATH))
     reactor.run()
