@@ -162,7 +162,7 @@ class FileTransferProtocol(basic.LineReceiver):
     def _cleanAndSplitInput(self, input):
 	      input = input.strip()
 	      input = input.split(' ')
-	
+
 	      return input
 
 class FileServerFactory(protocol.ServerFactory):
@@ -174,9 +174,9 @@ class FileServerFactory(protocol.ServerFactory):
         self.files = None
 	
 if __name__ == '__main__':
-	port = 1234
-  path = "/tmp"
-	display_message('Listening on port %d, serving files from directory: %s' % (port, path))
+    port = 1234
+    path = "/tmp"
+    display_message('Listening on port %d, serving files from directory: %s' % (port, path))
 
-	reactor.listenTCP(port, FileServerFactory(path))
-	reactor.run()
+    reactor.listenTCP(port, FileServerFactory(path))
+    reactor.run()
