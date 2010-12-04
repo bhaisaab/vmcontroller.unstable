@@ -88,7 +88,7 @@ def start(config):
     username = config.get('broker', 'username')
     password = config.get('broker', 'password')
 
-    fileServerPort      = config.get('fileserver', 'port')
+    fileServerPort      = int(config.get('fileserver', 'port'))
     fileServerDirectory = config.get('fileserver', 'directory')
 
     # Start File Server
