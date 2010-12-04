@@ -179,7 +179,7 @@ class FileTxs(object):
           fileServerPort = 1234
 
           fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
-          # FIXME: Ugly hack to call putfile after 6 secs
+          # FIXME: Ugly hack to call putfile after 6 secs, assuming it will be connected by then
           dres = defer.Deferred()
           reactor.callLater(6, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName, dres)
           self.logger.debug("Transferring file: %s to VM(%s)" % (pathToLocalFileName, vmIp))
