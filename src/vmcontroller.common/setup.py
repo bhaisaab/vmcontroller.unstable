@@ -1,6 +1,6 @@
 '''
-VMController is a general purpose virtual machine controller written in Python.\n
-vmcontroller.common is the common utility module between the vmcontroller.host and vmcontroller.vm package.
+VMController is a general purpose virtual machine controller written in Python.
+vmcontroller.common is the common package between the vmcontroller.host and vmcontroller.guest package.
 '''
 
 try:
@@ -10,10 +10,10 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-from vmcontroller.common import __version__
+#from vmcontroller.common import __version__
 
 name = 'vmcontroller.common'
-version = __version__
+version = '0.1.0'
 
 setup(
     name=name,
