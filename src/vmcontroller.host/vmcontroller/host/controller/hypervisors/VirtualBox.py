@@ -83,7 +83,7 @@ def removeVM(vm):
     d = threads.deferToThread( impl )
     return d
 
-def startVM(vm, guiMode):
+def start(vm, guiMode):
     if platform.system() != "Windows":
         def impl():
             mgr = ctx['mgr']
@@ -116,7 +116,7 @@ def startVM(vm, guiMode):
 
         d = threads.deferToThread(impl)
     else:
-        m = findMachineByNameOrId(vm)
+        m = machById(vm)
         mName = str(m.name)
         processProtocol = VBoxHeadlessProcessProtocol()
         pseudoCWD = os.path.dirname(sys.modules[__name__].__file__)
@@ -144,7 +144,7 @@ def reset(vm):
     d = threads.deferToThread( impl )
     return d
 
-def powerDown(vm):
+def powerOff(vm):
     def impl():
         return cmdExistingVm(vm, 'powerdown', None)
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
@@ -163,6 +163,13 @@ def resume(vm):
         return cmdExistingVm(vm, 'resume', None)
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
+    return d
+
+def states():
+    def impl():
+        return ctx['const']._Values['MachineState']
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread(impl) 
     return d
 
 def getState( vm): 
@@ -222,32 +229,60 @@ def listRunningVMs():
     d = threads.deferToThread(impl)
     return d
 
-####### TODO
+def listSnapshots(vm):
+    def impl():
+        return "To be implemented"
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread(impl)
+    return d
 
 def takeSnapshot(vm, name, desc):
     def impl():
-        return _execProgressCmd(vm, 'takeSnapshot', (name, desc))
-
+        logger.debug("Taking snapshot of VM: '%s' and description: %s" % (name, desc) )
+        return cmdExistingVm(vm, 'takeSnapshot', (name, desc))
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
 
-#TODO: Read and see docs from ISnapshot, give snapshot as arg
-def restoreSnapshot(vm, name, desc=""):
+def restoreSnapshot(vm, name):
     def impl():
-        return _execProgressCmd(vm, 'restoreSnapshot', (name, desc))
-
+        mach = machById(vm)
+        if name == "":
+            return False
+            #snapshot = mach.currentSnapshot()
+        snapshot = mach.findSnapshot(name)
+        logger.debug("Restoring snapshot named '%s' and id: %s" % (name, snapshot.id) )
+        return cmdExistingVm(vm, 'restoreSnapshot', (snapshot,))
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
 
-#FIXME: ID from Name
 def deleteSnapshot(vm, name):
-    snapshotId = getNamesToIdsMapping().get(name)
-    logger.debug("Deleting snapshot named '%s' with Id: %s" % (name, snapshotId) )
     def impl():
-        return _execProgressCmd(vm, 'deleteSnapshot', (snapshotId))
+        mach = machById(vm)
+        if name == "":
+            return False
+        snapshot = mach.findSnapshot(name)
+        logger.debug("Deleting snapshot named '%s' and id: %s" % (name, snapshot.id) )
+        return cmdExistingVm(vm, 'deleteSnapshot', (snapshot.id,))
+    logger.debug("Controller method %s invoked" % support.discoverCaller() )
+    d = threads.deferToThread( impl )
+    return d
 
+def getNamesToIdsMapping(): 
+    macToName = getMACToNameMapping()
+    nameToMac = support.reverseDict(macToName)
+    return nameToMac
+
+def getIdsToNamesMapping():
+    macToName = getMACToNameMapping()
+    return macToName
+
+def getStats(vm, key):
+    def impl():
+        if not ctx['perf']:
+            return
+        return ctx['perf'].query([key], [machById(vm)])
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
@@ -263,31 +298,12 @@ def getMachines():
     if ctx['vb'] is not None:
         return ctx['global'].getArray(ctx['vb'], 'machines')
 
-def findMachineByNameOrId(vm):
-    for m in getMachines():
-        if (m.name == vm) or (m.id == vm):
-            res = m
-            break
-        else: #only reached if "break" never exec'd
-            raise Exceptions.NoSuchVirtualMachine(str(vm))
-    return res 
-
-def getSessionForVm(vm):
-    vb = ctx['vb']
-    mgr = ctx['mgr']
-    session = mgr.getSessionObject(vb)
-    m = findMachineByNameOrId(vm) 
-    try:
-        vb.openExistingSession(session, m.id)
-    except:
-        vb.openSession(session, m.id)
-    return session
-
 def machById(id):
     try:
         mach = ctx['vb'].getMachine(id)
     except:
         mach = ctx['vb'].findMachine(id)
+        #raise Exceptions.NoSuchVirtualMachine(str(vm))
     return mach
 
 def detachVmDevice(mach,args):
@@ -330,8 +346,7 @@ def cmdExistingVm(vm,cmd,args):
         logger.info("Session to '%s' in wrong state: %s" % (mach.name, session.state))
         session.unlockMachine()
         return
-
-    console=session.console
+    console = session.console
     ops={'pause':           lambda: console.pause(),
          'resume':          lambda: console.resume(),
          'start':           lambda: console.powerUp(),
@@ -340,22 +355,15 @@ def cmdExistingVm(vm,cmd,args):
          'reset':           lambda: console.reset(),
          'saveState':       lambda: console.saveState(),
          'discardState':    lambda: console.discardSavedState(True), # True: Saved state file is deleted
-
-         #FIXME:
          'takeSnapshot':    lambda: console.takeSnapshot(args[0], args[1]) ,
-         'restoreSnapshot': lambda: console.restoreSnapshot(),
+         'restoreSnapshot': lambda: console.restoreSnapshot(args[0]),
          'deleteSnapshot':  lambda: console.deleteSnapshot(args[0]),
-         'stats':           lambda: perfStats(mach),
-         'guest':           lambda: guestExec(mach, console, args),
-         'ginfo':           lambda: ginfo(console, args),
-         'guestlambda':     lambda: args[0](mach, console, args[1:]),
-         'gueststats':      lambda: guestStats(console, args),
          }
     try:
         progress = ops[cmd]()
         if progress:
             while not progress.completed:
-                logger.debug("Command progress - %s %%" % str(progress.percent))
+                logger.debug("Command (%s) progress - %s %%" % (cmd, str(progress.percent)))
                 progress.waitForCompletion(WAITING_GRACE_MS)
             if progress.completed and int(progress.resultCode) == 0:
                 logger.info("Execution of command '%s' on VM %s completed" % (cmd, mach.name))
@@ -369,69 +377,49 @@ def cmdExistingVm(vm,cmd,args):
     session.unlockMachine()
     return True
 
-def getNamesToIdsMapping(): 
-    macToName = _getMACToNameMapping()
-    nameToMac = support.reverseDict(macToName)
-    return nameToMac
-
-def getIdsToNamesMapping():
-    macToName = _getMACToNameMapping()
-    return macToName
-
-def getPerformanceData(vm):
-    def impl():
-        return ctx['perf'].query( ["*"], [vm] )
-      
-    logger.debug("Controller method %s invoked" % support.discoverCaller() )
-    d = threads.deferToThread(impl)
-    return d
-
-def _getMACToNameMapping():
-  vb = ctx['vb']
-  def numsToColonNotation(nums):
-    nums = str(nums)
-    #gotta insert a : every two number, except for the last group.
-    g = ( nums[i:i+2] for i in xrange(0, len(nums), 2) )
-    return ':'.join(g)
-
-  ms = getMachines()
-  entriesGen = ( ( numsToColonNotation(m.getNetworkAdapter(1).MACAddress), str(m.name) ) 
-      for m in getMachines() ) 
-  #entriesGen = ( ( m.getNetworkAdapter(1).MACAddress, str(m.name) ) for m in _getMachines() )
-
-  mapping = dict(entriesGen)
-  return mapping
+def getMACToNameMapping():
+    vb = ctx['vb']
+    def numsToColonNotation(nums):
+        nums = str(nums)
+        #gotta insert a : every two number, except for the last group.
+        g = ( nums[i:i+2] for i in xrange(0, len(nums), 2) )
+        return ':'.join(g)
+    ms = getMachines()
+    entriesGen = ( ( numsToColonNotation(m.getNetworkAdapter(1).MACAddress), str(m.name) ) 
+        for m in getMachines() ) 
+    #entriesGen = ( ( m.getNetworkAdapter(1).MACAddress, str(m.name) ) for m in _getMachines() )
+    mapping = dict(entriesGen)
+    return mapping
 
 def getNameForMachineStateCode(c):
-  d = ctx['const']._Values['MachineState']
-  revD = [k for (k,v) in d.iteritems() if v == c]
-  return revD[0]
+    d = ctx['const']._Values['MachineState']
+    revD = [k for (k,v) in d.iteritems() if v == c]
+    return revD[0]
 
 class _VBoxHeadlessProcessProtocol(protocol.ProcessProtocol):
-  logger = logging.getLogger( support.discoverCaller() )
+    logger = logging.getLogger( support.discoverCaller() )
+    def connectionMade(self):
+        self.transport.closeStdin()
+        self.logger.debug("VBoxHeadless process started!")
+    def outReceived(self, data):
+        self.logger.debug("VBoxHeadless stdout: %s" % data)
+    def errReceived(self, data):
+        self.logger.debug("VBoxHeadless stderr: %s" % data)
+    def inConnectionLost(self):
+        pass #we don't care about stdin. We do in fact close it ourselves
+    def outConnectionLost(self):
+        self.logger.info("VBoxHeadless closed its stdout")
+    def errConnectionLost(self):
+        self.logger.info("VBoxHeadless closed its stderr")
+    def processExited(self, reason):
+        #This is called when the child process has been reaped 
+        pass
+    def processEnded(self, reason):
+        #This is called when all the file descriptors associated with the child
+        #process have been closed and the process has been reaped
+        self.logger.warn("Process ended (code: %s) " % reason.value.exitCode)
 
-  def connectionMade(self):
-    self.transport.closeStdin()
-    self.logger.debug("VBoxHeadless process started!")
-  def outReceived(self, data):
-    self.logger.debug("VBoxHeadless stdout: %s" % data)
-  def errReceived(self, data):
-    self.logger.debug("VBoxHeadless stderr: %s" % data)
-  def inConnectionLost(self):
-    pass #we don't care about stdin. We do in fact close it ourselves
-  def outConnectionLost(self):
-    self.logger.info("VBoxHeadless closed its stdout")
-  def errConnectionLost(self):
-    self.logger.info("VBoxHeadless closed its stderr")
-  def processExited(self, reason):
-    #This is called when the child process has been reaped 
-    pass
-  def processEnded(self, reason):
-    #This is called when all the file descriptors associated with the child
-    #process have been closed and the process has been reaped
-    self.logger.warn("Process ended (code: %s) " % reason.value.exitCode)
-
-############ INITIALIZATION ######################
+############ INITIALIZATION ############
 
 from vboxapi import VirtualBoxManager
 
