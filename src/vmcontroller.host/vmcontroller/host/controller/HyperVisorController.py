@@ -53,7 +53,7 @@ def _createController(config):
     return hvMod 
 
 _controller = None
-def getController():
+def _getController():
     global _controller
     if not _controller:
         _controller = _createController()
@@ -61,143 +61,119 @@ def getController():
     return _controller
 
 def version():
-    """
-    Returns version string of the hypervisor
-    """
-    return defer.maybeDeferred( getController().version )
+    """Returns version string of the hypervisor"""
+    return defer.maybeDeferred( _getController().version )
 
 def createVM(vm):
-    """
-    Creates virtual machine with given parameters.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().createVM, vm, image )
+    """Creates virtual machine with given parameters.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().createVM, vm )
 
 def openVM(vmFile):
-    """
-    Creates virtual machine with given parameters.
-    @param vmFile: Path to xml config file of the VM
-    """
-    return defer.maybeDeferred( getController().openVM, vmFile )
+    """Creates virtual machine with given parameters.
+    @param vmFile: Path to xml config file of the VM"""
+    return defer.maybeDeferred( _getController().openVM, vmFile )
 
 def removeVM(vm):
-    """
-    Removes virtual machine. NOTE: This operation is undo-able.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().removeVM, vm)
+    """Removes virtual machine. NOTE: This operation is undo-able.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().removeVM, vm)
 
-def startVM(vm, guiMode=False):
-    """
-    Starts virtual machine.
+def start(vm, guiMode=False):
+    """Starts virtual machine.
     @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().startVM, vm, guiMode )
+    @param guiMode: Run in a window or as a background process."""
+    return defer.maybeDeferred( _getController().start, vm, guiMode )
 
 def shutdown(vm):
-    """
-    Shutdown virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().shutdown, vm )
+    """ACPI Shutdown virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().shutdown, vm )
 
 def reset(vm):
-    """
-    Sends ACPI power reset signal to virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().reset, vm )
+    """Sends ACPI power reset signal to virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().reset, vm )
 
-def powerDown(vm):
-    """
-    Turn off virtual machine, without a proper shutdown.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().powerDown, vm )
+def powerOff(vm):
+    """Turn off virtual machine, without a proper shutdown.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().powerOff, vm )
 
 def pause(vm): 
-    """
-    Pauses running virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().pause, vm )
+    """Pauses running virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().pause, vm )
 
 def resume(vm):
-    """
-    Resumes a paused virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().resume, vm )
+    """Resumes a paused virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().resume, vm )
+
+def states():
+    """Returns different possible states a VM can have."""
+    return defer.maybeDeferred( _getController().states )
 
 def getState(vm):
-    """
-    Returns state of a virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().getState, vm )
+    """Returns state of a virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().getState, vm )
 
 def saveState(vm):
-    """
-    Saves state of the virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().saveState, vm )
+    """Saves state of the virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().saveState, vm )
 
 def discardState(vm):
-    """
-    Discards any saved state of the virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().discardState, vm )
+    """Discards any saved state of the virtual machine.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().discardState, vm )
 
 def takeSnapshot(vm, name, desc = ""):
-    """
-    Saves snapshot of current virtual machines vm state.
+    """Saves snapshot of current virtual machines vm state.
     @param vm: Virtual machine's name.
     @param name: Name of the snapshot.
-    @param desc: Snapshot's description.
-    """
-    return defer.maybeDeferred( getController().takeSnapshot, vm, name, desc )
+    @param desc: Snapshot's description."""
+    return defer.maybeDeferred( _getController().takeSnapshot, vm, name, desc )
 
-#FIXME: Restore last saved snapshot only
-def restoreSnapshot(vm, name, desc = ""):
-    """
-    Restores snapshot
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().restoreSnapshot, vm, name, desc )
+def restoreSnapshot(vm, name):
+    """Restores snapshot
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().restoreSnapshot, vm, name )
 
-#FIXME: some gid err
 def deleteSnapshot(vm, name):
-    """
-    Saves snapshot of current virtual machines vm state.
+    """Saves snapshot of current virtual machines vm state.
     @param vm: Virtual machine's name.
-    @param name: Name of the snapshot.
-    """
-    return defer.maybeDeferred( getController().deleteSnapshot, vm, name )
+    @param name: Name of the snapshot."""
+    return defer.maybeDeferred( _getController().deleteSnapshot, vm, name )
 
 def listVMs():
-    """listVMs()"""
-    return defer.maybeDeferred( getController().listVMs )
+    """Returns a list of virtual machines"""
+    return defer.maybeDeferred( _getController().listVMs )
 
 def listVMsWithState():
-    """listVMsWithState()"""
-    return defer.maybeDeferred( getController().listVMsWithState )
+    """Returns a dictionary of virtual machines with state"""
+    return defer.maybeDeferred( _getController().listVMsWithState )
 
 def listRunningVMs():
-    """listRunningVMs()"""
-    return defer.maybeDeferred( getController().listRunningVMs )
+    """Returns a list of running VMs"""
+    return defer.maybeDeferred( _getController().listRunningVMs )
+
+def listSnapshots(vm):
+    """Returns a list of snaphots of a particular VM.
+    @param vm: Virtual machine's name."""
+    return defer.maybeDeferred( _getController().listSnapshots, vm )
 
 def getNamesToIdsMapping():
     """getNamesToIdsMapping"""
-    return defer.maybeDeferred( getController().getNamesToIdsMapping )
+    return defer.maybeDeferred( _getController().getNamesToIdsMapping )
 
 def getIdsToNamesMapping(): 
     """getIdsToNamesMapping"""
-    return defer.maybeDeferred( getController().getIdsToNamesMapping )
+    return defer.maybeDeferred( _getController().getIdsToNamesMapping )
 
-def getPerformanceData(vm):
-    """getPerformanceData(vm)"""
-    return defer.maybeDeferred( getController().getPerformanceData, vm)
-
-
+def getStats(vm, key = '*'):
+    """Returns all the performance data for a valid key. For VirtualBox, the useful keys are 'name' and 'values_as_string' for a metric.
+    @param vm: Virtual machine's name.
+    @param key: Metric key."""
+    return defer.maybeDeferred( _getController().getStats, vm, key)
