@@ -60,13 +60,25 @@ def getController():
 
     return _controller
 
-def createVM(vm, image):
+def version():
+    """
+    Returns version string of the hypervisor
+    """
+    return defer.maybeDeferred( getController().version )
+
+def createVM(vm):
     """
     Creates virtual machine with given parameters.
     @param vm: Virtual machine's name.
-    @param image: Path to the virtual machine's image
     """
     return defer.maybeDeferred( getController().createVM, vm, image )
+
+def openVM(vmFile):
+    """
+    Creates virtual machine with given parameters.
+    @param vmFile: Path to xml config file of the VM
+    """
+    return defer.maybeDeferred( getController().openVM, vmFile )
 
 def removeVM(vm):
     """
@@ -75,12 +87,12 @@ def removeVM(vm):
     """
     return defer.maybeDeferred( getController().removeVM, vm)
 
-def start(vm):
+def startVM(vm, guiMode=False):
     """
     Starts virtual machine.
     @param vm: Virtual machine's name.
     """
-    return defer.maybeDeferred( getController().start, vm )
+    return defer.maybeDeferred( getController().startVM, vm, guiMode )
 
 def shutdown(vm):
     """
@@ -89,13 +101,6 @@ def shutdown(vm):
     """
     return defer.maybeDeferred( getController().shutdown, vm )
 
-def sleep(vm):
-    """
-    Sends ACPI sleep signal to virtual machine.
-    @param vm: Virtual machine's name.
-    """
-    return defer.maybeDeferred( getController().sleep, vm )
-
 def reset(vm):
     """
     Sends ACPI power reset signal to virtual machine.
@@ -103,12 +108,12 @@ def reset(vm):
     """
     return defer.maybeDeferred( getController().reset, vm )
 
-def powerOff(vm):
+def powerDown(vm):
     """
     Turn off virtual machine, without a proper shutdown.
     @param vm: Virtual machine's name.
     """
-    return defer.maybeDeferred( getController().powerOff, vm )
+    return defer.maybeDeferred( getController().powerDown, vm )
 
 def pause(vm): 
     """
