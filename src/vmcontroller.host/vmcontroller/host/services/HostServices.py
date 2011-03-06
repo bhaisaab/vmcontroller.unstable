@@ -257,8 +257,11 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
     ## Operation on the VMs  ##
     ###########################
 
-    def xmlrpc_ping(self, vmName, timeout_secs=5.0): #FIXME: magic number of seconds
-        vmId = self.vmRegistry.getIdForName(vmName)
+    def xmlrpc_ping(self, vm, timeout_secs=5.0): #FIXME: magic number of seconds
+        """Pings a VM. vmcontroller.guest is required in the guest.
+        @param vm: Virtual machine's name.
+        @param timeout_secs: Timeout in seconds. Default is 5.0 secs."""
+        vmId = self.vmRegistry.getIdForName(vm)
         return self._host.ping(vmId,timeout_secs)
 
     def xmlrpc_runCmd(self, toVmName, cmd, args=(), env={}, path=None, fileForStdin=''):
@@ -427,9 +430,3 @@ class Host(object):
 
     def cpFileFromVM(self, vmId, pathToRemoteFileName, pathToLocalFileName = None):
         return self.fileTxs.cpFileFromVM(vmId, pathToRemoteFileName, pathToLocalFileName)
-
-      
-
-
-
-
