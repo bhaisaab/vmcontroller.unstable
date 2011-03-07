@@ -13,7 +13,7 @@ except ImportError:
 #from vmcontroller.host import __version__
 
 name = 'vmcontroller.host'
-version = '0.1.0' #__version__
+version = '0.2.0' #__version__
 
 setup(
     name=name,
@@ -33,7 +33,7 @@ setup(
     install_requires=[
         'distribute',
         'setuptools',
-        'vmcontroller.common>=0.1.0',
+        'vmcontroller.common',
         'twisted',
         'stomper==0.2.2',
         'netifaces',

@@ -13,7 +13,7 @@ except ImportError:
 #from vmcontroller.common import __version__
 
 name = 'vmcontroller.common'
-version = '0.1.0'
+version = '0.2.0'
 
 setup(
     name=name,

@@ -2,7 +2,7 @@
 VMController Common, common module between vmcontroller.host and vmcontroller.guest
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __authors__ = ['"David Garcia Quintas" <dgquintas@gmail.com>', 
                '"Rohit Yadav" <rohityadav89@gmail.com>']
 __copyright__ = "Copyright 2010 VMController Authors"

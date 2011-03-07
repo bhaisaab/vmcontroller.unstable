@@ -11,7 +11,7 @@ except ImportError:
     from setuptools import setup, find_packages
 
 name = 'vmcontroller.guest'
-version = '0.1.0'
+version = '0.2.0'
 
 setup(
     name=name,
@@ -31,7 +31,7 @@ setup(
     install_requires=[
         'distribute',
         'setuptools',
-        'vmcontroller.common>=0.0.1',
+        'vmcontroller.common',
         'twisted',
         'stomper==0.2.2',
         'netifaces',
