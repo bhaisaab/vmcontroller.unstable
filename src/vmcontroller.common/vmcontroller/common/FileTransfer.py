@@ -1,8 +1,16 @@
 """
 Common file transfer utilities
 """
-import hashlib
-from datetime import datetime
+try:
+    import logging
+    import hashlib
+    from datetime import datetime
+except ImportError, e:
+    print "Import error in %s : %s" % (__name__, e)
+    import sys
+    sys.exit()
+
+logger = logging.getLogger(__name__)
 
 COMMANDS = {
             'list': ('list', 'Displays a list of all the available files'),
@@ -17,15 +25,11 @@ def timestamp():
 def display_message(message):
     """ Displays a message with a prepended time stamp. """
     
-    print '%s %s' % (timestamp(), message)
+    logger.debug( '%s %s' % (timestamp(), message) )
 
 def validate_file_md5_hash(file, original_hash):
     """ Returns true if file MD5 hash matches with the provided one, false otherwise. """
-
-    if get_file_md5_hash(file) == original_hash:
-        return True
-        
-    return False
+    return get_file_md5_hash(file) == original_hash
 
 def get_file_md5_hash(file):
     """ Returns file MD5 hash"""
@@ -36,7 +40,7 @@ def get_file_md5_hash(file):
         
     return md5_hash.hexdigest()
 
-def read_bytes_from_file(file, chunk_size = 8100):
+def read_bytes_from_file(file, chunk_size = 8192):
     """ Read bytes from a file in chunks. """
     
     with open(file, 'rb') as file:
