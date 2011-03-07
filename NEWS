@@ -1,0 +1,9 @@
+Version 0.2.0:
+ - Fixed all APIs to work with VirtualBox 4.x
+ - Added new interfaces and renamed old ones
+
+Version 0.1.0:
+ - Added vmcontroller common, guest and host modules.
+ - Build system (zc.buildout) functional
+ - API listed at wiki page: http://code.google.com/p/vmcontroller/wiki/APIs
+ - Works fine with VirtualBox 3.x
