@@ -39,29 +39,12 @@ def version():
     d = threads.deferToThread(impl)
     return d
 
-def createVM(name):
+def createVM(vboxFile):
     vb = ctx['vb']
     def impl():
-        ms = getMachines()
-        for m in ms:
-            if m.name == name:
-              raise ValueError("VM '%s' already exists" % name)
-        guestType = vb.getGuestOSType('Linux26')
-        mach = vb.createMachine("", name, guestType.id, "", True)
-        mach.saveSettings()
+        mach = vb.openMachine(vboxFile)
         vb.registerMachine( mach )
-        logger.debug("Created VM with UUID %s" % mach.id)
-        return (True, name)
-    logger.debug("Controller method %s invoked" % support.discoverCaller() )
-    d = threads.deferToThread( impl )
-    return d
-
-def openVM(vmFile):
-    vb = ctx['vb']
-    def impl():
-        mach = vb.openMachine(vmFile) # Overwrite is true
-        vb.registerMachine( mach )
-        logger.debug("Created VM %s with UUID %s" % (mach.name, mach.id))
+        logger.debug("Created VM '%s' with UUID %s" % (mach.name, mach.id))
         return (True, mach.name)
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
@@ -74,11 +57,12 @@ def removeVM(vm):
         mach = machById(vm)
         id = mach.id
         name = mach.name
-        logger.debug("Removing VM: %s with UUID %s " % (mach.name, id))
-        cmdClosedVm(mach, detachVmDevice, ["ALL"])
-        mach = mach.unregister(ctx['global'].constants.CleanupMode_Full)
-        if mach:
-             mach.deleteSettings()
+        logger.debug("Removing VM '%s' with UUID %s " % (mach.name, id))
+        #cmdClosedVm(mach, detachVmDevice, ["ALL"]) # Not needed
+        mediums = mach.unregister(ctx['global'].constants.CleanupMode_DetachAllReturnHardDisksOnly)
+        for medium in mediums:
+            logger.debug("Unregistering Hard Disk: %s" % medium.name)
+            medium.close()
         return (True, name)
     d = threads.deferToThread( impl )
     return d

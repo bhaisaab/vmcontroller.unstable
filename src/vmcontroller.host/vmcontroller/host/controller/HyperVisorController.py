@@ -64,15 +64,10 @@ def version():
     """Returns version string of the hypervisor"""
     return defer.maybeDeferred( _getController().version )
 
-def createVM(vm):
-    """Creates virtual machine with given parameters.
-    @param vm: Virtual machine's name."""
-    return defer.maybeDeferred( _getController().createVM, vm )
-
-def openVM(vmFile):
-    """Creates virtual machine with given parameters.
-    @param vmFile: Path to xml config file of the VM"""
-    return defer.maybeDeferred( _getController().openVM, vmFile )
+def createVM(vboxFile):
+    """Creates virtual machine with given vbox file.
+    @param vboxFile: VirtualBox Machine Definition XML file."""
+    return defer.maybeDeferred( _getController().createVM, vboxFile )
 
 def removeVM(vm):
     """Removes virtual machine. NOTE: This operation is undo-able.
