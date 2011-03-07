@@ -231,7 +231,16 @@ def listRunningVMs():
 
 def listSnapshots(vm):
     def impl():
-        return "To be implemented"
+        sl = []
+        if machById(vm).snapshotCount == 0:
+            return sl
+        root = machById(vm).findSnapshot('')
+        def recurseTree(snapList, node):
+            snapList.append(node.name)
+            for child in node.getChildren():
+                recurseTree(snapList, child)
+        recurseTree(sl, root)
+        return sl
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread(impl)
     return d
