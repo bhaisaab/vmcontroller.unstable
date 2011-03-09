@@ -172,7 +172,7 @@ class FileServerFactory(protocol.ServerFactory):
         self.files_path = files_path
         self.clients = []
         self.files = None
-	
+
 if __name__ == '__main__':
     port = 1234
     path = "/tmp"
