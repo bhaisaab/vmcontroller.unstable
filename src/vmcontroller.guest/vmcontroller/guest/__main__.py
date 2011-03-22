@@ -13,7 +13,7 @@ try:
     from pkg_resources import resource_stream
     from ConfigParser import SafeConfigParser
     from optparse import OptionParser
-    from twisted.internet import reactor, protocol
+    from twisted.internet import reactor, protocol, ssl
     from twisted.application import internet, service
 
     from vmcontroller.common import support, exceptions
@@ -93,7 +93,13 @@ def start(config):
 
     # Start File Server
     try:
-      	reactor.listenTCP(fileServerPort, FileServerFactory(fileServerDirectory))
+        privkey = os.path.abspath( os.path.dirname(__file__) + '/services/privkey.pem')
+        cacert = os.path.abspath( os.path.dirname(__file__) + '/services/cacert.pem')
+        logger.info('Using SSL, privkey = %s, cacert = %s' % (privkey, cacert))
+
+        reactor.listenSSL(fileServerPort, FileServerFactory(fileServerDirectory), 
+            ssl.DefaultOpenSSLContextFactory(privkey, cacert) )
+
         logger.info('Listening on port %d, serving files from directory: %s' % (fileServerPort, fileServerDirectory))
     except:
         logger.fatal("Unable to start file server at port: %d, please check." % fileServerPort)
