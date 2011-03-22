@@ -2,7 +2,7 @@ try:
     import os
     import logging
 
-    from twisted.internet import reactor, protocol, stdio, defer
+    from twisted.internet import reactor, protocol, stdio, defer, ssl
     from twisted.protocols import basic
     from twisted.internet.protocol import ClientFactory
 
@@ -24,7 +24,8 @@ class FileTransferClient(basic.LineReceiver):
         self.logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__name__))
 
         self.factory = FileTransferClientFactory(self.files_path)
-        self.connection = reactor.connectTCP(self.server_ip, self.server_port, self.factory)
+        self.connection = reactor.connectSSL(self.server_ip, self.server_port, self.factory, 
+                ssl.ClientContextFactory())
         self.factory.deferred.addCallback(self._display_response)
 
     def listFile(self):
@@ -170,7 +171,8 @@ class FileTransferClientFactory(protocol.ClientFactory):
 
 if __name__ == '__main__':
     # FIXME Get these stuff automatically
-    vmIp = "192.168.56.101"
+    #vmIp = "192.168.56.101"
+    vmIp = "127.0.0.1"
     fileDirPath = '/tmp'
     fileServerPort = 1234
 

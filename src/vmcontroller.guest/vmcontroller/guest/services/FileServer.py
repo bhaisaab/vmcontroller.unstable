@@ -2,7 +2,7 @@ try:
     import os
     import logging
 
-    from twisted.internet import reactor, protocol
+    from twisted.internet import reactor, protocol, ssl
     from twisted.protocols import basic
 
     from vmcontroller.common.FileTransfer import *
@@ -177,5 +177,6 @@ if __name__ == '__main__':
     port = 1234
     path = "/tmp"
 
-    reactor.listenTCP(port, FileServerFactory(path))
+    reactor.listenSSL(port, FileServerFactory(path), 
+            ssl.DefaultOpenSSLContextFactory('privkey.pem', 'cacert.pem'))
     reactor.run()
