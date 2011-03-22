@@ -175,7 +175,7 @@ class FileTxs(object):
           vmIp = "192.168.56.101"
 
           # TODO: Get these stuff automatically, from config...
-          fileDirPath = '/home/rohit/temp'
+          fileDirPath = '/tmp'
           fileServerPort = 1234
 
           fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
@@ -198,7 +198,7 @@ class FileTxs(object):
             vmIp = "192.168.56.101"
 
             # TODO: Get these stuff automatically, from config...
-            fileDirPath = '/home/rohit/temp'
+            fileDirPath = '/tmp'
             fileServerPort = 1234
 
             fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)

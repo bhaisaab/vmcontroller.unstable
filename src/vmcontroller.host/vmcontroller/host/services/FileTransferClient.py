@@ -171,8 +171,8 @@ class FileTransferClientFactory(protocol.ClientFactory):
 
 if __name__ == '__main__':
     # FIXME Get these stuff automatically
-    #vmIp = "192.168.56.101"
-    vmIp = "127.0.0.1"
+    vmIp = "192.168.56.101"
+    #vmIp = "127.0.0.1" # vmIp is the IP of the host only adapter interface
     fileDirPath = '/tmp'
     fileServerPort = 1234
 
@@ -181,8 +181,6 @@ if __name__ == '__main__':
     pathToLocalFileName = '/bin/uname'
     pathToRemoteFileName = 'uname-bin'
     print "Transferring file: %s to VM(%s)" % (pathToLocalFileName, vmIp)
-
-    reactor.callLater(5, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName)
-#    fileUtil.sendFile(pathToLocalFileName, pathToRemoteFileName)
-#    stdio.StandardIO(CommandLineProtocol(IP, PORT, LOCALPATH))
+    dres = defer.Deferred()
+    reactor.callLater(5, fileUtil.putFile, pathToLocalFileName, pathToRemoteFileName, dres)
     reactor.run()
