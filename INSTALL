@@ -1,0 +1,54 @@
+Building
+========
+
+Run:
+  ./build
+
+It will build runnable scripts in /buildout/bin/
+Go to this folder and run scripts:
+  cd buildout/bin
+  ./vmcontroller-host --debug
+
+Enjoy hacking!
+
+If the build script shows some error, make sure zc.buildout is not
+installed in the host environment.
+
+Packaging
+=========
+
+Run the following to create eggs pkgs in 'dist' folder:
+  sh scripts/cook-eggs.sh
+
+Installation
+============
+
+To install egg, simply run:
+  easy_install <path-to-egg>
+
+To build and install, in the root of the source module, run:
+  python setup.py build
+  python setup.py install
+
+Building docs
+=============
+
+Install epydoc, if you don't have:
+  easy_install epydoc
+
+Build API docs:
+  epydoc --config=docs/epydoc.cfg
+
+The docs will be generated in /docs/api
+
+Testing
+=======
+
+To run the tests, do:
+  trial tests/
+
+For using virtualenv: (where, env is the folder name)
+  virtualenv --no-site-packages --distribute env
+  source env/bin/activate
+  <do whatever needs to be done>
+  deactivate

@@ -1,0 +1,21 @@
+syntax: glob
+*.pyc
+TODO
+env
+virt
+data
+build/
+dist/
+docs/api
+parts/
+develop-eggs/
+bin/
+eggs/
+dist/
+downloads/
+_trial_temp/
+.coverage
+.installed.cfg
+.settings
+*.egg*
+*.log

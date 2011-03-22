@@ -1,0 +1,10 @@
+HACKINGS: Code writing guidelines.
+
+* Indentation: Four whitespaces, no tabs.
+* Filenames: - All files name lowercase which don't have classes like utilities.
+             - Files with classes to have a general name with Hungarian style like "StompProtocol.py".
+             - Test scripts start with test_ prefix.
+* Function names: all lowercase, underscores.
+* Variable names: - Class objects camel-case.
+                  - Local variables lower case, with underscores.
+                  - Members can have m_ prefix

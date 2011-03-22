@@ -1,0 +1,36 @@
+About
+=====
+VMController project aims at creating a general purpose cross-platform virtual machine controller.
+Presently, the project supports VirtualBox only.
+
+History
+=======
+BoincVM (http://bitbucket.org/dgquintas/boincvm) was originally written by David Garcia Quintas in 2009 at CERN.
+VMController is based on the original BoincVM.
+
+Information
+===========
+
+VMController web site . . . http://code.google.com/p/vmcontroller
+Bug Report  . . . . . . . . http://code.google.com/p/vmcontroller/issues/
+Download  . . . . . . . . . http://code.google.com/p/vmcontroller/downloads/
+Wiki  . . . . . . . . . . . http://code.google.com/p/vmcontroller/w/
+Hg Repository   . . . . . . https://vmcontroller.googlecode.com/hg/
+
+Structure
+=========
+
+buildout/bootstrap.py    - zc.buildout bootstrap file.
+buildout/buildout.cfg    - The main buildout config file.
+build                    - Building script for buildout.
+README                   - This file.
+INSTALL                  - General Installation instructions.
+AUTHORS                  - Authors List.
+HACKING                  - Hacking VMController.
+LICENSE                  - The BSD (Simplified) license.
+scripts/                 - Folders containing script to build, release, clean
+src/                     - The root source folder
+src/vmcontroller.common/ - VMController's common module.
+src/vmcontroller.host/   - VMController's host module.
+src/vmcontroller.guest/  - VMController's guest module.
+tests/                   - Unit tests, based on trial
