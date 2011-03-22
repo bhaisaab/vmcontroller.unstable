@@ -35,44 +35,46 @@ class FileTransferProtocol(basic.LineReceiver):
 
     def lineReceived(self, line):
         self.logger.debug('Received the following line from the client [%s]: %s' % (self.transport.getPeer().host, line))
-
         data = self._cleanAndSplitInput(line)
         if len(data) == 0 or data == '':
-	          return 
+            return
 
         command = data[0].lower()
         if not command in COMMANDS:
-	          self.transport.write('Invalid command\n')
-	          self.transport.write('ENDMSG\n')
-	          return
+            self.transport.write('Invalid command\n')
+            self.transport.write('ENDMSG\n')
+            return
         if command == 'list':
-	          self._send_list_of_files()
+            if len(data) < 2:
+                data.append(self.factory.files_path)
+            self._send_list_of_files(data[1])
         elif command == 'get':
-	          try:
-		            filename = data[1]
-	          except IndexError:
-		            self.transport.write('Missing filename\n')
-		            self.transport.write('ENDMSG\n')
-		            return
-	
-	          if not self.factory.files:
-		            self.factory.files = self._get_file_list()
-		
-	          if not filename in self.factory.files:
-		            self.transport.write('File with filename %s does not exist\n' % (filename))
-		            self.transport.write('ENDMSG\n')
-		            return
-	
-	          self.logger.debug('Sending file: %s (%d KB)' % (filename, self.factory.files[filename][1] / 1024))
-	
-	          self.transport.write('HASH %s %s\n' % (filename, self.factory.files[filename][2]))
-	          self.setRawMode()
-	
-	          for bytes in read_bytes_from_file(os.path.join(self.factory.files_path, filename)):
-		            self.transport.write(bytes)
-	
-	          self.transport.write('\r\n')	
-	          self.setLineMode()
+            try:
+                filename = data[1]
+            except IndexError:
+                self.transport.write('Missing filename\n')
+                self.transport.write('ENDMSG\n')
+                return
+
+            if not os.path.exists(filename):
+                    self.transport.write('File with filename %s does not exist, please give full path\n' % (filename))
+                    self.transport.write('ENDMSG\n')
+                    return
+
+            file_size = os.path.getsize(filename)
+            md5_hash = get_file_md5_hash(filename)
+            self.logger.debug('Sending file: %s (%d KB)' % (filename, file_size / 1024))
+
+            self.transport.write('HASH %s %s\n' % (os.path.basename(filename), md5_hash))
+            self.setRawMode()
+
+            try:
+              for bytes in read_bytes_from_file(filename):
+                  self.transport.write(bytes)
+            except:
+              self.logger.debug("File sending failed")	
+            self.transport.write('\r\n')	
+            self.setLineMode()
         elif command == 'put':
 	          try:
 		            filename = data[1]
@@ -129,35 +131,14 @@ class FileTransferProtocol(basic.LineReceiver):
 	      else:
 		        self.file_handler.write(data)
 	
-    def _send_list_of_files(self):
-	      files = self._get_file_list()
-	      self.factory.files = files
-	
-	      self.transport.write('Files (%d): \n\n' % len(files))	
-	      for key, value in files.iteritems():
-		        self.transport.write('- %s (%d.2 KB)\n' % (key, (value[1] / 1024.0)))
+    def _send_list_of_files(self, path=""):
+	      files = os.listdir(path)
+
+	      self.transport.write('Found [%d] files in the path (%s): \n\n' % (len(files), path))	
+	      for filename in files:
+		        self.transport.write('- %s (%d.2 KB)\n' % (filename, (os.path.getsize(filename) / 1024.0)))
 		
 	      self.transport.write('ENDMSG\n')
-		
-    def _get_file_list(self):
-	      """ Returns a list of the files in the specified directory as a dictionary:
-	
-	      dict['file name'] = (file path, file size, file md5 hash)
-	      """
-	
-	      file_list = {}
-	      for filename in os.listdir(self.factory.files_path):
-		        file_path = os.path.join(self.factory.files_path, filename)
-		
-		        if os.path.isdir(file_path):
-			          continue
-		
-		        file_size = os.path.getsize(file_path)
-		        md5_hash = get_file_md5_hash(file_path)
-
-		        file_list[filename] = (file_path, file_size, md5_hash)
-
-	      return file_list
 		
     def _cleanAndSplitInput(self, input):
 	      input = input.strip()
