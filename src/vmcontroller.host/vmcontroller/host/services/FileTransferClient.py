@@ -155,10 +155,10 @@ class FileTransferProtocol(basic.LineReceiver):
             self.file_handler = None
             
             if validate_file_md5_hash(file_path, self.file_data[1]):
-                self.logger.debug('File %s has been successfully transfered and saved' % (filename))
+                self.logger.debug('File %s has been successfully transfered and saved' % (file_path))
             else:
                 os.unlink(file_path)
-                self.logger.debug('File %s has been successfully transfered, but deleted due to invalid MD5 hash' % (filename))
+                self.logger.debug('File %s has been successfully transfered, but deleted due to invalid MD5 hash' % (file_path))
         else:
             self.file_handler.write(data)
 
