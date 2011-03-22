@@ -10,6 +10,7 @@ try:
     import time
     import uuid
     import inspect
+    import tempfile
 
     from twisted.internet import defer, reactor
     from twisted.web import xmlrpc, server, resource
@@ -186,7 +187,7 @@ class FileTxs(object):
 
       return dres
 
-    def cpFileFromVM(self, vmId, pathToRemoteFileName, pathToLocalFileName = None):
+    def cpFileFromVM(self, vmId, pathToRemoteFileName, pathToLocalDirectory = tempfile.gettempdir()):
         #this returns a deferred whose callbacks take care of returning the result
         if not self.vmRegistry.isValid(vmId):
             msg = "Invalid VM Id: '%s'" % vmId 
@@ -198,7 +199,7 @@ class FileTxs(object):
             vmIp = "192.168.56.101"
 
             # TODO: Get these stuff automatically, from config...
-            fileDirPath = '/tmp'
+            fileDirPath = pathToLocalDirectory
             fileServerPort = 1234
 
             fileUtil = FileTransferClient(vmIp, fileServerPort, fileDirPath)
@@ -273,9 +274,6 @@ class HostXMLRPCService(xmlrpc.XMLRPC, object):
 
     def xmlrpc_getCmdResults(self, cmdId):
         return self._host.getCmdResults(cmdId)
-
-    def xmlrpc_getCmdDetails(self, cmdId): 
-        return self._host.getCmdDetails(cmdId)
 
     def xmlrpc_cpFileToVM(self, vmName, pathToLocalFileName, pathToRemoteFileName = None ):
         vmId = self.vmRegistry.getIdForName(vmName)
@@ -414,6 +412,9 @@ class Host(object):
     #XXX: make it possible to be blocking?
     def getCmdResults(self, cmdId):
         return self.cmdRegistry.popCmdResults(cmdId)
+
+    def listFinishedCmds(self):
+        return self.cmdRegistry.listFinishedCmds()
 
     ################################
 
