@@ -24,26 +24,19 @@ logger = logging.getLogger(__name__)
 
 ######### INITIALIZATION #########
 
-conn = libvirt.openReadOnly(None)
+hypervisor = "vbox"
+
+if hypervisor == "vbox"
+conn = libvirt.open('vbox:///session')
 if conn == None:
     logger.fatal("Failed to open connection to the hypervisor")
     sys.exit(1)
-
-try:
-    dom0 = conn.lookupByName("Domain-0")
-except:
-    print 'Failed to find the main domain'
-    sys.exit(1)
-
-# right now works only with qemu, for evey hypervisor, a driver is needed
-print "Domain 0: id %d running %s" % (dom0.ID(), dom0.OSType())
-print dom0.info()
 
 ######### PUBLIC API #########
 
 def version():
     def impl():
-        return libvirt.getVersion()
+        return "LibVirt-" + libvirt.getVersion()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread(impl)
     return d
@@ -57,47 +50,54 @@ def createVM(xmlFile):
 
 def removeVM(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.undefine()
     d = threads.deferToThread( impl )
     return d
 
 def start(vm, guiMode):
     def impl():
-        pass 
+        dom = conn.lookupByName(vm)
+        return dom.create()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     return d
 
 def shutdown(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.shutdown()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
 
 def reset(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.reboot(True)
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
 
 def powerOff(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.destroy()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
 
 def pause(vm): 
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.suspend()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
 
 def resume(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.resume()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
@@ -118,7 +118,8 @@ def getState( vm):
 
 def saveState(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.save("Current")
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
@@ -132,14 +133,14 @@ def discardState(vm):
 
 def listVMs():
     def impl():
-        pass
+        return conn.listDefinedDomains()
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread(impl)
     return d
 
 def listVMsWithState():
     def impl():
-        pass
+        pass # ? over list of domains, use dom.isActive()?
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread(impl)
     return d
@@ -153,7 +154,8 @@ def listRunningVMs():
 
 def listSnapshots(vm):
     def impl():
-        pass
+        dom = conn.lookupByName(vm)
+        return dom.
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread(impl)
     return d
