@@ -9,10 +9,10 @@ try:
     import platform
     import sys
     import uuid
-
     import libvirt
 
     from twisted.internet import protocol, reactor, defer, threads
+    from vmcontroller.common import support, exceptions
 except ImportError, e:
     print "Import error in %s : %s" % (__name__, e)
     import sys
@@ -21,16 +21,6 @@ except ImportError, e:
 WAITING_GRACE_MS = 800
 
 logger = logging.getLogger(__name__)
-
-######### INITIALIZATION #########
-
-hypervisor = "vbox"
-
-if hypervisor == "vbox"
-conn = libvirt.open('vbox:///session')
-if conn == None:
-    logger.fatal("Failed to open connection to the hypervisor")
-    sys.exit(1)
 
 ######### PUBLIC API #########
 
@@ -154,8 +144,7 @@ def listRunningVMs():
 
 def listSnapshots(vm):
     def impl():
-        dom = conn.lookupByName(vm)
-        return dom.
+        pass
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread(impl)
     return d
@@ -180,4 +169,19 @@ def deleteSnapshot(vm, name):
     logger.debug("Controller method %s invoked" % support.discoverCaller() )
     d = threads.deferToThread( impl )
     return d
+
+
+######### INITIALIZATION #########
+
+hypervisor = "vbox"
+conn = None
+
+if hypervisor == "vbox":
+    conn = libvirt.open('vbox:///session')
+
+if conn == None:
+    logger.fatal("Failed to open connection to the hypervisor")
+    sys.exit(1)
+
+logger.info("Using LibVirt %s and Hypervisor: %s. VMs found: %s" % (libvirt.getVersion(), hypervisor, conn.listDefinedDomains()))
 
